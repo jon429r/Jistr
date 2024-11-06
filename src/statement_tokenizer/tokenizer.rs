@@ -268,7 +268,10 @@ pub mod tokenizers {
         if info.token != none.token {
             return info;
         }
-        let error: String = format!("Error: No token found for expression {}", expression);
+        let error: String = format!(
+            "Error: No token found for expression {}",
+            expression[index..].to_string()
+        );
         println!("{}", error);
         exit(1);
 

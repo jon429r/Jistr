@@ -29,18 +29,18 @@ mod statement_tokenizer {
     pub mod variable_tokenizer;
 }
 
-use std::env;
 use std::error::Error;
 use std::ffi::OsStr;
 use std::fs;
 use std::path::Path;
+use std::{env, usize};
 
 //use crate::collection::collections::{Array, Dictionary};
+use crate::node::nodes::ASTNode;
 use base_variable::variables::VARIABLE_STACK;
 use compiler::compilers::route_to_parser;
 use globals::MAKE_LOOP;
 use node::nodes::match_token_to_node;
-use node::nodes::ASTNode;
 use statement_tokenizer::tokenizer::tokenizers::tokenize;
 
 use crate::collection::{ARRAY_STACK, DICTIONARY_STACK};
@@ -106,21 +106,68 @@ fn tokenize_input(input: &str) -> Vec<ASTNode> {
 fn parse_tokens(tokens: Vec<ASTNode>) -> Result<(), Box<dyn Error>> {
     let mut tokenized_expression = Vec::new();
     let mut result = true;
+    let mut to_tokenize: Vec<ASTNode> = tokens.clone();
 
-    for node in tokens {
+    let mut brace_count = 0;
+    let mut bracket_count = 0;
+    let mut current_line = String::new();
+    let mut finished_lines: Vec<String> = Vec::new();
+    let mut parethisis_count = 0;
+    let mut line_complete = false;
+
+    // in order to handle multiple lines of code we need to check for the semicolon
+    // or closing curly brace use continue to call get input and tokenize the input
+    // adding that to the toxic expression
+    for node in to_tokenize {
         match node {
             ASTNode::SemiColon => {
-                result = route_to_parser(&mut tokenized_expression, None)?;
-                tokenized_expression.clear(); // Clear after processing
+                if brace_count == 0 && bracket_count == 0 && parethisis_count == 0 {
+                    finished_lines.push(current_line.clone());
+                    current_line.clear();
+                }
+            }
+            ASTNode::RightCurly => {
+                // we need to continue taking in input until we reach the end of the block
+                brace_count += 1;
+            }
+            ASTNode::LeftCurly => {
+                //check if is the end of the block
+                brace_count -= 1;
+                if brace_count == 0 {
+                    line_complete = true;
+                }
+            }
+            ASTNode::RightBracket => {
+                bracket_count += 1;
+            }
+            ASTNode::LeftBracket => {
+                bracket_count -= 1;
+                if bracket_count == 0 {
+                    line_complete = true;
+                }
+            }
+            ASTNode::RightParenthesis => {
+                parethisis_count += 1;
+            }
+            ASTNode::LeftParenthesis => {
+                parethisis_count -= 1;
+                if parethisis_count == 0 {
+                    line_complete = true;
+                }
             }
             _ => {
                 tokenized_expression.push(node); // Accumulate tokens
             }
         }
-
-        // If needed, handle error states, loops, etc.
-        while unsafe { MAKE_LOOP } {
+        if line_complete {
             result = route_to_parser(&mut tokenized_expression, None)?;
+            tokenized_expression.clear();
+        } else {
+            let mut history: Vec<String> = Vec::new();
+            let mut history_index: usize = 0;
+            let input = get_input(&mut history, &mut history_index)?;
+            let tokens = tokenize_input(&input);
+            to_tokenize = tokens.clone();
         }
     }
 
@@ -281,7 +328,9 @@ fn parse_file(file_path: &str) -> Result<(), Box<dyn Error>> {
             match node {
                 ASTNode::SemiColon => {
                     // Check if the expression is valid before processing
-                    if tokenized_expression.is_empty() {
+                    if tokenized_expression.len() == 1 {
+                        println!("Error at line number: {}", line.get(0..i).unwrap());
+                        println!("Line content: {}", line);
                         println!("Syntax error: expression must be more than a semicolon");
                         std::process::exit(1);
                     }
@@ -326,7 +375,8 @@ fn parse_file(file_path: &str) -> Result<(), Box<dyn Error>> {
 
                     // check result if Error throw error with line number and exit
                     if !result {
-                        println!("Error in parsing line: {}", line);
+                        println!("Error in parsing line: {}", line.get(0..i).unwrap());
+                        println!("Line: {}", line);
                         std::process::exit(1);
                     }
 
@@ -743,29 +793,6 @@ mod test_input_output {
     }
     */
     /*
-                    // Test function declarations and calls
-                    #[test]
-                    fn test_function_declaration_and_call() {
-                        let file_path = "test_files/function_declaration.jist";
-                        run_jist_command(file_path).stdout(predicate::str::contains("Function Result: 15"));
-                    }
-
-                    // Test nested function calls
-                    #[test]
-                    fn test_nested_function_calls() {
-                        let file_path = "test_files/nested_function_calls.jist";
-                        run_jist_command(file_path).stdout(predicate::str::contains(
-                            "Outer function result: 20\nInner function result: 10",
-                        ));
-                    }
-
-                    // Test recursive functions
-                    #[test]
-                    fn test_recursive_function() {
-                        let file_path = "test_files/recursive_function.jist";
-                        run_jist_command(file_path).stdout(predicate::str::contains("Factorial of 5 is 120"));
-                    }
-
             //
             // Test logical operations (AND, OR, NOT)
             #[test]

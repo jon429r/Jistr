@@ -6,7 +6,6 @@ pub mod function_tokenizers {
         let chars: Vec<char> = expression.chars().collect();
         let mut j = index;
 
-        // Look for the `->` pattern
         while j < chars.len() {
             let char = chars[j];
             let nextchar = if j + 1 < chars.len() {
@@ -104,6 +103,7 @@ pub mod function_tokenizers {
         // Parse the function parameters
         if unsafe { PARSEFUNCTIONCALL } {
             let mut parameter = String::new();
+            let mut j = index;
 
             while j < chars.len() {
                 let char = chars[j];
@@ -113,9 +113,9 @@ pub mod function_tokenizers {
                     // End of function call parameters
                     unsafe { PARSEFUNCTIONCALL = false };
                     return ParseInfo::new(
-                        TokenTypes::RightParenthesis,
+                        TokenTypes::FunctionArguments,
                         (j - index).try_into().unwrap(),
-                        ")".to_string(),
+                        parameter.to_string(),
                     );
                 } else if char == ',' {
                     // Handle function arguments separated by commas
@@ -129,6 +129,8 @@ pub mod function_tokenizers {
                     parameter.clear();
                 } else if !char.is_whitespace() {
                     // Collect parameter characters
+                    parameter.push(char);
+                } else {
                     parameter.push(char);
                 }
 

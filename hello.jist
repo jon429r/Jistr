@@ -1,1 +1,3 @@
-print("hello");
+let contents: string = read("hello.txt");
+println("Contents of hello.txt:");
+println(contents);

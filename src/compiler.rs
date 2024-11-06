@@ -9,12 +9,12 @@ pub mod compilers {
     use crate::compilers::conditional::conditional_compilers::compile_if_elif_else_statement;
     use crate::compilers::function::*;
     use crate::compilers::loops::loop_compilers::{compile_for_loop, compile_while_loop};
+    use crate::compilers::variable::operation;
     use crate::compilers::variable::{
         compile_dot_statement, compile_variable_call, parse_variable_declaration,
     };
-    use crate::compilers::variable::{operation, parse_operator};
     use crate::globals::{IF_ELSE_SKIP, MAKE_LOOP};
-    use crate::node::nodes::{ASTNode, IntNode, OperatorNode};
+    use crate::node::nodes::{ASTNode, IntNode};
     use std::error::Error;
 
     pub fn set_make_loop(value: bool) {
@@ -44,6 +44,57 @@ pub mod compilers {
     }
 
     impl Error for CompilerError {}
+
+    // Use Result for proper error handling
+    pub fn parse_operator(
+        left: &ASTNode,
+        operator: &ASTNode,
+        right: &ASTNode,
+    ) -> Result<ASTNode, Box<dyn Error>> {
+        match operator {
+            ASTNode::Operator(o) => match o.operator.as_str() {
+                "+" => {
+                    if let (ASTNode::Int(left_val), ASTNode::Int(right_val)) = (left, right) {
+                        let result = left_val.value + right_val.value;
+                        return Ok(ASTNode::Int(IntNode { value: result }));
+                    }
+                }
+                "-" => {
+                    if let (ASTNode::Int(left_val), ASTNode::Int(right_val)) = (left, right) {
+                        let result = left_val.value - right_val.value;
+                        return Ok(ASTNode::Int(IntNode { value: result }));
+                    }
+                }
+                "*" => {
+                    if let (ASTNode::Int(left_val), ASTNode::Int(right_val)) = (left, right) {
+                        let result = left_val.value * right_val.value;
+                        return Ok(ASTNode::Int(IntNode { value: result }));
+                    }
+                }
+                "/" => {
+                    if let (ASTNode::Int(left_val), ASTNode::Int(right_val)) = (left, right) {
+                        if right_val.value != 0 {
+                            let result = left_val.value / right_val.value;
+                            return Ok(ASTNode::Int(IntNode { value: result }));
+                        } else {
+                            return Err(Box::new(CompilerError::DivisionByZero));
+                        }
+                    }
+                }
+                _ => {
+                    return Err(Box::new(CompilerError::UnrecognizedOperator(
+                        o.operator.clone(),
+                    )))
+                }
+            },
+            _ => {
+                return Err(Box::new(CompilerError::InvalidSyntax(
+                    "Expected an operator.".to_string(),
+                )))
+            }
+        }
+        Ok(ASTNode::None) // Return a neutral node on failure (though this should likely be handled better)
+    }
 
     pub fn route_to_parser(
         expression: &mut Vec<ASTNode>,
@@ -227,9 +278,10 @@ pub mod compilers {
 
 #[cfg(test)]
 mod complier_tests {
-
-    use crate::compilers::variable::{operation, parse_operator};
+    use crate::compiler::compilers::parse_operator;
     use crate::node::nodes::{ASTNode, IntNode, OperatorNode};
+
+    use crate::compilers::variable::operation;
     //test parse operator
     #[test]
     fn test_parse_operator_addition() {

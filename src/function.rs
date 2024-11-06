@@ -144,7 +144,8 @@ pub mod functions {
                         .downcast_ref::<String>()
                         .expect("Expected String");
                     let result = f(arg.clone());
-                    return Box::new(result);
+                    //print!("SingleStringFn result: {}", result);
+                    Box::new(result)
                 } else {
                     panic!("Expected exactly one argument for SingleStringFn");
                 }
@@ -167,7 +168,7 @@ pub mod functions {
             }
 
             FunctionTypes::ArrayPopFn(f) => {
-                println!("ArrayPopFn called arguments: {:?}", arguments);
+                //println!("ArrayPopFn called arguments: {:?}", arguments);
                 if arguments.len() == 1 {
                     // Extract the argument and ensure it's of type Array
                     let arg = arguments[0]
@@ -425,6 +426,9 @@ pub mod functions {
                         flt.to_string()
                     } else if let Some(b) = arguments[0].downcast_ref::<bool>() {
                         // Argument is a bool, convert to String
+                        b.to_string()
+                    } else if let Some(b) = arguments[0].downcast_ref::<char>() {
+                        // Argument is a char, convert to String
                         b.to_string()
                     } else {
                         panic!(

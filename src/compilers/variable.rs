@@ -468,14 +468,19 @@ pub fn parse_variable_declaration(exp_stack: &mut Vec<ASTNode>) -> Result<bool, 
                     // check with match then set value to result
                     value = result.unwrap();
 
-                    println!(
-                        "New variable = name: {}, value: {:?}, type: {:?}",
-                        var_name.clone().unwrap(),
-                        value,
-                        var_type.clone().unwrap()
-                    );
+                    /*println!(
+                                            "New variable = name: {}, value: {:?}, type: {:?}",
+                                            var_name.clone().unwrap(),
+                                            value,
+                                            var_type.clone().unwrap()
+                                        );
+                    */
 
-                    let _variable = Variable::new(var_name.unwrap(), value, var_type.unwrap());
+                    let variable = Variable::new(var_name.unwrap(), value, var_type.unwrap());
+                    // add to VARIABLE_STACK
+                    unsafe {
+                        VARIABLE_STACK.push(variable.clone());
+                    }
                     return Ok(true);
                 }
             }

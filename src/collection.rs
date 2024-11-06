@@ -6,7 +6,6 @@ use lazy_static::lazy_static;
 use crate::function::functions::FunctionTypes;
 use std::collections::HashMap;
 use std::sync::Mutex;
-use std::usize;
 
 lazy_static! {
     pub static ref ARRAY_STACK: Mutex<Vec<Array>> = Mutex::new(Vec::new());

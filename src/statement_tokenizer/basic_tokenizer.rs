@@ -3,28 +3,41 @@ pub mod basic_tokenizers {
     use crate::token_type::token_types::TokenTypes;
 
     pub fn read_object_call(expression: &String) -> ParseInfo {
-        // if the whole expression is a group of characters it is a object call eg foo eg a eg
-        // rad_var
         let mut object_name: String = String::new();
         let mut j = 0;
 
+        // First, collect the object name (alphabetic characters)
         while j < expression.len() {
-            let char: char = expression.chars().nth(j).unwrap();
+            let char = expression.chars().nth(j).unwrap();
             if !char.is_alphabetic() {
-                return ParseInfo::new(TokenTypes::None, 0, "none".to_string());
+                break; // Stop if it's not an alphabetic character
             } else {
-                //add char to object object_name
-                object_name.push(char);
+                object_name.push(char); // Collect alphabetic characters
             }
             j += 1;
         }
-        return ParseInfo::new(
-            TokenTypes::ObjectCall {
-                name: object_name.clone(),
-            },
-            expression.len().try_into().unwrap(),
-            object_name,
-        );
+
+        // Check if the next character exists after the object name
+        if j < expression.len() {
+            let next_char = expression.chars().nth(j).unwrap();
+
+            // If the next character is not a dot, return None
+            if next_char != '.' {
+                return ParseInfo::new(TokenTypes::None, 0, "none".to_string());
+            } else {
+                // If it's a dot, return an object call
+                return ParseInfo::new(
+                    TokenTypes::ObjectCall {
+                        name: object_name.clone(),
+                    },
+                    expression.len().try_into().unwrap(),
+                    object_name,
+                );
+            }
+        }
+
+        // If there's no valid character after the object name, return VariableCall
+        ParseInfo::new(TokenTypes::VariableCall, j.try_into().unwrap(), object_name)
     }
 
     pub fn read_boolean(expression: String, index: usize) -> ParseInfo {

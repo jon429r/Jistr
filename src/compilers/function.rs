@@ -1,7 +1,7 @@
 use crate::base_variable::variable::Variable;
 use crate::collection::collections::{Array, Dictionary};
 use crate::collection::{ARRAY_FUNCTIONS, DICTIONARY_FUNCTIONS};
-use crate::node::nodes::ASTNode;
+use crate::node::nodes::{match_token_to_node, ASTNode};
 use std::process::exit;
 
 use crate::compilers::variable::compile_dot_statement;
@@ -16,6 +16,9 @@ use crate::function::FUNCTION_STACK;
 use crate::function_map::FUNCTIONS;
 use std::any::Any;
 use std::error::Error;
+
+use crate::node::nodes::to_base_type;
+use crate::statement_tokenizer::tokenizer::tokenizers::tokenize;
 
 fn add_to_function_stack(func: Function) {
     FUNCTION_STACK.lock().unwrap().push(func);
@@ -245,7 +248,6 @@ pub fn parse_function_call(
             );
             match result {
                 Ok(result) => {
-                    print!("result: {:?}", result);
                     return Ok(result);
                 }
                 Err(e) => return Err(e),
@@ -298,7 +300,6 @@ pub fn get_function_result(
     // Handle standard functions
     if let Some(func) = std_functions.get(&function_name.as_str()) {
         let result = call_standard_function(func, parameter_and_value)?;
-        println!("Result: {:?}", result);
         return Ok(result);
     }
 
@@ -337,13 +338,29 @@ fn call_function_with_params(
             BaseTypes::StringWrapper(x) => Box::new(x.clone()),
             BaseTypes::Bool(x) => Box::new(*x),
             BaseTypes::Char(x) => Box::new(*x),
-            _ => return Err("Unknown parameter type".into()),
+            _ => {
+                let error = format!("Unknown parameter type: {:?}", param);
+                return Err(error.into());
+            }
         };
         params.push(boxed_param);
     }
 
     let result = call_function(func, params);
-    convert_result_to_basetype(result)
+
+    if let Some(value) = result.downcast_ref::<i32>() {
+        Ok(BaseTypes::Int(*value))
+    } else if let Some(value) = result.downcast_ref::<f64>() {
+        Ok(BaseTypes::Float(*value))
+    } else if let Some(value) = result.downcast_ref::<String>() {
+        Ok(BaseTypes::StringWrapper(value.clone()))
+    } else if let Some(value) = result.downcast_ref::<bool>() {
+        Ok(BaseTypes::Bool(*value))
+    } else if let Some(value) = result.downcast_ref::<char>() {
+        Ok(BaseTypes::Char(*value))
+    } else {
+        Ok(BaseTypes::Null)
+    }
 }
 
 fn call_standard_function(
@@ -366,14 +383,19 @@ fn call_standard_function(
     }
 
     let result = call_function(func, params);
-    convert_result_to_basetype(result)
-}
 
-fn convert_result_to_basetype(result: Box<dyn Any>) -> Result<BaseTypes, Box<dyn Error>> {
-    if let Ok(base_type) = result.downcast::<BaseTypes>() {
-        return Ok(*base_type);
+    if let Some(value) = result.downcast_ref::<i32>() {
+        Ok(BaseTypes::Int(*value))
+    } else if let Some(value) = result.downcast_ref::<f64>() {
+        Ok(BaseTypes::Float(*value))
+    } else if let Some(value) = result.downcast_ref::<String>() {
+        Ok(BaseTypes::StringWrapper(value.clone()))
+    } else if let Some(value) = result.downcast_ref::<bool>() {
+        Ok(BaseTypes::Bool(*value))
+    } else if let Some(value) = result.downcast_ref::<char>() {
+        Ok(BaseTypes::Char(*value))
     } else {
-        return Ok(BaseTypes::Null);
+        Ok(BaseTypes::Null)
     }
 }
 
@@ -425,6 +447,17 @@ fn parse_function_call_arguments(expression: &[ASTNode]) -> Result<Vec<BaseTypes
             ASTNode::RightParenthesis => {
                 // End of arguments, break out of the loop
                 break;
+            }
+            ASTNode::FunctionArguments(a) => {
+                // Process function arguments
+                //call tokenizer
+                let mut result = tokenize(a.value.clone());
+                let mut output = Vec::new();
+                for node in result {
+                    output.push(match_token_to_node(node));
+                }
+                let variable = parse_variable_call(&output[0]);
+                arguments.push(variable?.1);
             }
             _ => {
                 return Err("Unhandled node in arguments".into());
