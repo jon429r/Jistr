@@ -137,10 +137,6 @@ pub mod conditional_compilers {
         let ast_result = parse_operator(&first_value, &operation, &second_value)
             .map_err(|e| format!("Error:\n Unable to parse operator:\n {}", e))?;
 
-        println!(
-            "expression: {:?} {:?} {:?}",
-            first_value, operation, second_value
-        );
         // Safely convert AST result to BaseTypes, with error handling
         let base_result: BaseTypes = match to_base_type(&ast_result) {
             Some(result) => result,
@@ -152,8 +148,7 @@ pub mod conditional_compilers {
         // Convert BaseTypes result into i32 and return true/false
         let result: i32 = base_result.into();
         let bool_result = result == 1;
-        println!("Bool Result: {}", bool_result);
-        return Ok(bool_result);
+        Ok(bool_result)
     }
 
     /// Compiles an if/elif/else statements

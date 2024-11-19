@@ -56,6 +56,8 @@ pub mod function_tokenizers {
         let mut function_name = String::new();
         let chars: Vec<char> = expression.chars().collect();
 
+        let reserved_chars: Vec<char> = ['+', '-', '*', '/', '!'].into();
+
         // Collect the function name
         while j < chars.len() {
             let char = chars[j];
@@ -93,10 +95,13 @@ pub mod function_tokenizers {
                     (j - index).try_into().unwrap(),
                     function_name.clone(),
                 );
+            } else if reserved_chars.contains(&char) {
+                return ParseInfo::new(TokenTypes::None, 0, "none".to_string());
             } else if !char.is_whitespace() {
                 // Build up function name
                 function_name.push(char);
             }
+
             j += 1;
         }
 

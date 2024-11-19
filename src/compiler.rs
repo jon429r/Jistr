@@ -175,7 +175,7 @@ pub mod compilers {
                             return Ok(true);
                         }
                         Ok(false) => {
-                            return Ok(false);
+                            return Ok(true);
                         }
                         Err(e) => {
                             return Err(e);
@@ -221,6 +221,7 @@ pub mod compilers {
                         }
                     }
                 }
+                ASTNode::RightCurly => {}
                 ASTNode::String(s) => {
                     println!("String: {}", s.value);
                 }
@@ -257,12 +258,13 @@ pub mod compilers {
                     break;
                 }
                 ASTNode::None => {
-                    return Err(Box::new(CompilerError::InvalidSyntax(
-                        "Unhandled node type in compiler.".to_string(),
-                    )));
+                    println!("Invlid Syntax: {:?}", node);
+                    let error = "Unhandle node type in compiler";
+                    return Err(Box::new(CompilerError::InvalidSyntax(error.into())));
                 }
                 ASTNode::RightParenthesis => {}
                 _ => {
+                    println!("Invlid Syntax: {:?}", node);
                     return Err(Box::new(CompilerError::InvalidSyntax(
                         "Unhandled node type in compiler.".to_string(),
                     )));

@@ -40,6 +40,7 @@ use crate::node::nodes::ASTNode;
 use base_variable::variables::VARIABLE_STACK;
 use compiler::compilers::route_to_parser;
 use globals::MAKE_LOOP;
+//use jist::node::nodes::ASTNode;
 use node::nodes::match_token_to_node;
 use statement_tokenizer::tokenizer::tokenizers::tokenize;
 
@@ -314,18 +315,23 @@ fn parse_file(file_path: &str) -> Result<(), Box<dyn Error>> {
 
     for line in finished_lines {
         let tokens = tokenize(line.clone());
-        //println!("tokens: {:?}", tokens);
+
         let mut hasroot = true;
         let mut first_node: ASTNode = ASTNode::None;
         let mut result: bool;
 
-        for (i, parsed_info) in tokens.iter().enumerate() {
+        let mut nodes: Vec<ASTNode> = Vec::new();
+        for parsed_info in tokens.iter() {
             let node = match_token_to_node(parsed_info.clone());
+            nodes.push(node);
+        }
+
+        for (i, parsed_info) in nodes.clone().iter().enumerate() {
             if i == 0 {
-                first_node = node.clone();
+                first_node = parsed_info.clone();
             }
 
-            match node {
+            match parsed_info {
                 ASTNode::SemiColon => {
                     // Check if the expression is valid before processing
                     if tokenized_expression.len() == 1 {
@@ -337,9 +343,8 @@ fn parse_file(file_path: &str) -> Result<(), Box<dyn Error>> {
 
                     // Route to parser only if there are valid tokens
                     match first_node.clone() {
-                        ASTNode::While(_) => {
-                            result = route_to_parser(&mut tokenized_expression, None)?
-                        }
+                        ASTNode::While(_) => result = route_to_parser(&mut nodes, None)?,
+
                         ASTNode::If(_) => {
                             result = route_to_parser(&mut tokenized_expression, None)?
                         }
@@ -375,7 +380,7 @@ fn parse_file(file_path: &str) -> Result<(), Box<dyn Error>> {
 
                     // check result if Error throw error with line number and exit
                     if !result {
-                        println!("Error in parsing line: {}", line.get(0..i).unwrap());
+                        println!("Error in parsing line: {}", line);
                         println!("Line: {}", line);
                         std::process::exit(1);
                     }
@@ -385,7 +390,7 @@ fn parse_file(file_path: &str) -> Result<(), Box<dyn Error>> {
                 }
                 _ => {
                     hasroot = true; // Mark that we have a valid root
-                    tokenized_expression.push(node); // Accumulate tokens
+                    tokenized_expression.push(parsed_info.clone()); // Accumulate tokens
                 }
             }
         }

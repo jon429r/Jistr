@@ -57,19 +57,21 @@ pub mod loop_compilers {
             }
             index += 1;
         }
-        return Ok(true);
+        Ok(true)
     }
 
     pub fn compile_while_loop(expression: &mut Vec<ASTNode>) -> Result<bool, Box<dyn Error>> {
         let mut tokenized: Vec<ParseInfo> = Vec::new();
         let mut index = 0;
 
+        if expression.len() <= 1 {
+            return Err("Error: Empty body in while loop.".into());
+        }
+
         while index < expression.len() {
-            let node = &expression[index];
+            let node = &expression[index].clone();
             match node {
                 ASTNode::While(while_node) => {
-                    //println!(while_node.condition);
-
                     // Tokenize and evaluate the condition
                     let tokenized_statement = tokenize(while_node.condition.clone());
                     tokenized.extend(tokenized_statement.clone());
@@ -81,11 +83,13 @@ pub mod loop_compilers {
                         .collect();
 
                     // Evaluate the initial condition
-                    let mut evaluation_result: bool = false; // Rename for clarity
-                                                             //println!("Initial condition evaluation result: {}", evaluation_result);
+                    let mut evaluation_result: bool = false;
                     match compile_conditional_statement(&mut condition_nodes) {
                         Ok(result) => {
                             evaluation_result = result; // Store the result from the function
+                            if !result {
+                                return Ok(false); // Exit the loop if the condition is false
+                            }
                         }
                         Err(e) => {
                             return Err(e);
@@ -97,24 +101,18 @@ pub mod loop_compilers {
                         //println!("Entering while loop body");
 
                         // Process the body of the while loop
-                        let mut body_index = index + 1; // Start after the while node
-                        while body_index < expression.len() {
-                            println!("Processing expression: {:?}", expression);
-
-                            // Handle each body node
-                            let body_result = route_to_parser(expression, Some(body_index))?;
-                            if !body_result {
-                                //println!("Parsing failed for body node. Exiting loop.");
-                                return Err("Error: Parsing failed for body node.".into());
+                        for i in while_node.block.clone() {
+                            let tokenized_body = tokenize(i.clone());
+                            let mut nodes: Vec<ASTNode> = Vec::new();
+                            // Convert to AST nodes
+                            for token in tokenized_body {
+                                nodes.push(match_token_to_node(token));
                             }
-
-                            body_index += 1; // Move to the next body node
+                            let Result = route_to_parser(&mut nodes, 0.into());
                         }
 
                         // Re-evaluate the while loop condition after each iteration
-                        evaluation_result = false; // Reset the evaluation result
-                                                   //
-                        match compile_conditional_statement(expression) {
+                        match compile_conditional_statement(&mut condition_nodes.clone()) {
                             Ok(result) => {
                                 evaluation_result = result; // Store the result from the function
                             }
@@ -126,7 +124,6 @@ pub mod loop_compilers {
                         //println!("Condition re-evaluation result: {}", result);
 
                         if !evaluation_result {
-                            //println!("Condition is false. Exiting while loop.");
                             return Ok(false); // Exit the loop if the condition is false
                         }
                     }
@@ -137,10 +134,6 @@ pub mod loop_compilers {
                     index += 1;
                     //println!("Moving to next node after while loop.");
                     continue; // Skip to the next iteration
-                }
-                ASTNode::Else => {
-                    //println!("Else node detected.");
-                    // Handle else statements if needed
                 }
                 _ => {
                     println!("Unhandled node: {:?}", node);

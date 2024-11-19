@@ -166,12 +166,14 @@ pub mod token_types {
          */
         While {
             statement: String,
+            block: Vec<String>,
         },
         /*
          * For statement
          */
         For {
             statement: String,
+            block: Vec<String>,
         },
         /*
          * Break statement
@@ -293,12 +295,21 @@ pub mod token_types {
                 (TokenTypes::Finally, TokenTypes::Finally) => true,
                 (TokenTypes::Not, TokenTypes::Not) => true,
                 (
-                    TokenTypes::While { statement: ref a },
-                    TokenTypes::While { statement: ref b },
+                    TokenTypes::While {
+                        statement: ref a, ..
+                    },
+                    TokenTypes::While {
+                        statement: ref b, ..
+                    },
                 ) => a == b,
-                (TokenTypes::For { statement: ref a }, TokenTypes::For { statement: ref b }) => {
-                    a == b
-                }
+                (
+                    TokenTypes::For {
+                        statement: ref a, ..
+                    },
+                    TokenTypes::For {
+                        statement: ref b, ..
+                    },
+                ) => a == b,
                 _ => false,
             }
         }
@@ -327,8 +338,12 @@ pub mod token_types {
                 TokenTypes::Else => "Else".to_string(),
                 TokenTypes::Elif { statement } => format!("Elif: {}", statement),
                 TokenTypes::If { statement } => format!("If: {}", statement),
-                TokenTypes::While { statement } => format!("While: {}", statement),
-                TokenTypes::For { statement } => format!("For: {}", statement),
+                TokenTypes::While { statement, block } => {
+                    format!("While: {}, Block: {:?}", statement, block)
+                }
+                TokenTypes::For { statement, block } => {
+                    format!("For: {}, Block: {:?}", statement, block)
+                }
                 TokenTypes::Break => "Break".to_string(),
                 TokenTypes::Continue => "Continue".to_string(),
                 TokenTypes::Try => "Try".to_string(),

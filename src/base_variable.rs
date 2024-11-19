@@ -317,6 +317,7 @@ pub mod variable {
         }
 
         pub fn increment(&mut self) {
+            println!("Incrementing variable: {}", self);
             match self.value {
                 BaseTypes::Int(ref mut i) => {
                     // Increment the integer value in place

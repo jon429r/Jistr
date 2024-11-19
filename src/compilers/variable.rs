@@ -290,10 +290,10 @@ pub fn compile_variable_call(exp_stack: &mut Vec<ASTNode>) -> Result<bool, Box<d
         for var in unsafe { &VARIABLE_STACK } {
             if var.name == v.name {
                 variable = var.clone();
-                println!(
+                /*println!(
                     "Variable found: Name = {}, Value = {:?}, Type = {:?}",
                     variable.name, variable.value, variable.var_type
-                );
+                );*/
                 break; // Break after finding the variable
             }
         }
@@ -691,7 +691,6 @@ pub fn parse_operator(
     operator: &ASTNode,
     right: &ASTNode,
 ) -> Result<ASTNode, Box<dyn Error>> {
-    println!("Parsing operator: {:?} {:?} {:?}", left, operator, right);
     match operator {
         ASTNode::Operator(o) => match o.operator.as_str() {
             "+" => {

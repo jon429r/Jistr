@@ -303,7 +303,10 @@ pub fn get_function_result(
         return Ok(result);
     }
 
-    println!("Function call is not in any of the registered functions.");
+    println!(
+        "Function call {} is not in any of the registered functions.",
+        function_name
+    );
     Err("Function not found".into())
 }
 

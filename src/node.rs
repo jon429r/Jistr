@@ -197,11 +197,12 @@ pub mod nodes {
     #[derive(Debug, Clone, PartialEq)]
     pub struct WhileNode {
         pub condition: String,
+        pub block: Vec<String>,
     }
 
     impl WhileNode {
-        pub fn new(condition: String) -> Self {
-            WhileNode { condition }
+        pub fn new(condition: String, block: Vec<String>) -> Self {
+            WhileNode { condition, block }
         }
     }
 
@@ -214,11 +215,12 @@ pub mod nodes {
     #[derive(Debug, Clone, PartialEq)]
     pub struct ForNode {
         pub condition: String,
+        pub block: Vec<String>,
     }
 
     impl ForNode {
-        pub fn new(condition: String) -> Self {
-            ForNode { condition }
+        pub fn new(condition: String, block: Vec<String>) -> Self {
+            ForNode { condition, block }
         }
     }
 
@@ -900,8 +902,10 @@ pub mod nodes {
             TokenTypes::LeftBracket => ASTNode::LeftBracket,
             TokenTypes::RightBracket => ASTNode::RightBracket,
             TokenTypes::FatArrow => ASTNode::FatArrow,
-            TokenTypes::While { statement } => ASTNode::While(WhileNode::new(statement)),
-            TokenTypes::For { statement } => ASTNode::For(ForNode::new(statement)),
+            TokenTypes::While { statement, block } => {
+                ASTNode::While(WhileNode::new(statement, block))
+            }
+            TokenTypes::For { statement, block } => ASTNode::For(ForNode::new(statement, block)),
             TokenTypes::If { statement } => ASTNode::If(IfNode::new(statement)),
             TokenTypes::Elif { statement } => ASTNode::Elif(ElifNode::new(statement)),
             TokenTypes::Else => ASTNode::Else,

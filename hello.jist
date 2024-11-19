@@ -1,3 +1,6 @@
-let contents: string = read("hello.txt");
-println("Contents of hello.txt:");
-println(contents);
+let i: int = 0;
+while (i < 5) {
+    i++;
+    println("Hello, World!");
+  }
+print("Goodbye, World!");

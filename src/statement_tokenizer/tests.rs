@@ -1,8 +1,90 @@
 #[cfg(test)]
 mod tokenizer_tests {
+    use crate::node::nodes::ASTNode::*;
     use crate::statement_tokenizer::tokenizer::tokenizers::ParseInfo;
     use crate::statement_tokenizer::tokenizer::tokenizers::{self, tokenize};
     use crate::token_type::token_types::TokenTypes;
+    use crate::token_type::token_types::TokenTypes::*;
+
+    #[test]
+    fn test_while_loop() {
+        let input = r#"let i: int = 0;
+                   while (i < 3) {
+                       i++;
+                   }
+                   print("Goodbye, World!");"#
+            .to_string();
+
+        let result = tokenize(input);
+
+        let expected_tokens = vec![
+            ParseInfo {
+                token: TokenTypes::Variable,
+                chars_read: 1,
+                value: "i".to_string(),
+            },
+            ParseInfo {
+                token: TokenTypes::VarTypeAssignment,
+                chars_read: 10,
+                value: "int".to_string(),
+            },
+            ParseInfo {
+                token: TokenTypes::AssignmentOperator,
+                chars_read: 1,
+                value: "=".to_string(),
+            },
+            ParseInfo {
+                token: TokenTypes::Int,
+                chars_read: 1,
+                value: "0".to_string(),
+            },
+            ParseInfo {
+                token: TokenTypes::SemiColon,
+                chars_read: 1,
+                value: ";".to_string(),
+            },
+            ParseInfo {
+                token: TokenTypes::While {
+                    statement: "i < 3".to_string(),
+                    block: Some(vec!["i++;".to_string()]),
+                },
+                chars_read: 48,
+                value: "while".to_string(),
+            },
+            ParseInfo {
+                token: TokenTypes::RightCurly,
+                chars_read: 1,
+                value: "}".to_string(),
+            },
+            ParseInfo {
+                token: TokenTypes::FunctionCall,
+                chars_read: 5,
+                value: "print".to_string(),
+            },
+            ParseInfo {
+                token: TokenTypes::LeftParenthesis,
+                chars_read: 1,
+                value: "(".to_string(),
+            },
+            ParseInfo {
+                token: TokenTypes::String,
+                chars_read: 17,
+                value: "\"Goodbye, World!\"".to_string(),
+            },
+            ParseInfo {
+                token: TokenTypes::RightParenthesis,
+                chars_read: 1,
+                value: ")".to_string(),
+            },
+            ParseInfo {
+                token: TokenTypes::SemiColon,
+                chars_read: 1,
+                value: ";".to_string(),
+            },
+        ];
+
+        assert_eq!(result, expected_tokens);
+    }
 
     #[test]
     fn test_tokenize_collection_assignment_dict() {

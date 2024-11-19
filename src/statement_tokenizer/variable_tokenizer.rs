@@ -228,7 +228,6 @@ pub mod variable_tokenizers {
         if !variable_name.is_empty() {
             for variable in unsafe { &VARIABLE_STACK } {
                 if variable.name == variable_name {
-                    print!("Found in stack");
                     return ParseInfo::new(
                         TokenTypes::VariableCall,
                         (j - index).try_into().unwrap(),
