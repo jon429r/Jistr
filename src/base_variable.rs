@@ -211,9 +211,9 @@ pub mod variable {
             // Ensure the value type matches the variable type
             let checked_value = match var_type {
                 BaseTypes::Int(_) => match value {
-                    BaseTypes::Int(_) => value,
+                    BaseTypes::Int(_) => value.clone(),
                     BaseTypes::Null => BaseTypes::Int(0),
-                    BaseTypes::Float(_) => BaseTypes::Int(value.into()),
+                    BaseTypes::Float(_) => BaseTypes::Int(value.clone().into()),
                     _ => {
                         println!(
                             "Warning: Value type mismatch for '{}'. Setting default Int value.",
@@ -224,9 +224,9 @@ pub mod variable {
                 },
                 BaseTypes::Float(_) => {
                     match value {
-                        BaseTypes::Float(_) => value,
+                        BaseTypes::Float(_) => value.clone(),
                         BaseTypes::Null => BaseTypes::Float(0.0),
-                        BaseTypes::Int(_) => BaseTypes::Float(value.into()),
+                        BaseTypes::Int(_) => BaseTypes::Float(value.clone().into()),
                         _ => {
                             println!("Warning: Value type mismatch for '{}'. Setting default Float value.", name);
                             BaseTypes::Float(0.0)
@@ -235,8 +235,8 @@ pub mod variable {
                 }
                 BaseTypes::StringWrapper(_) => {
                     match value {
-                        BaseTypes::StringWrapper(_) => value,
-                        BaseTypes::Char(_) => BaseTypes::StringWrapper(value.into()),
+                        BaseTypes::StringWrapper(_) => value.clone(),
+                        BaseTypes::Char(_) => BaseTypes::StringWrapper(value.clone().into()),
 
                         BaseTypes::Null => BaseTypes::StringWrapper(String::new()),
 
@@ -248,7 +248,7 @@ pub mod variable {
                 }
                 BaseTypes::Bool(_) => {
                     match value {
-                        BaseTypes::Bool(_) => value,
+                        BaseTypes::Bool(_) => value.clone(),
                         BaseTypes::Int(1) => BaseTypes::Bool(true),
                         BaseTypes::Int(0) => BaseTypes::Bool(false),
                         BaseTypes::Null => BaseTypes::Bool(false),
@@ -262,7 +262,7 @@ pub mod variable {
 
                 BaseTypes::Char(_) => {
                     match value {
-                        BaseTypes::Char(_) => value,
+                        BaseTypes::Char(_) => value.clone(),
                         BaseTypes::Null => BaseTypes::Char('\0'),
 
                         _ => {
@@ -274,7 +274,7 @@ pub mod variable {
 
                 BaseTypes::Null => {
                     match value {
-                        BaseTypes::Null => value,
+                        BaseTypes::Null => value.clone(),
                         _ => {
                             println!("Warning: Value type mismatch for '{}'. Setting default Null value.", name);
                             BaseTypes::Null
@@ -302,14 +302,7 @@ pub mod variable {
         where
             T: Into<BaseTypes>,
         {
-            self.value = value.into();
-            //now update the variable in the stack
-            for variable in unsafe { VARIABLE_STACK.iter_mut() } {
-                if variable.name == self.name {
-                    variable.value = self.value.clone();
-                    break; // Exit loop once the variable is found and updated
-                }
-            }
+            self.value = value.into(); //now update the variable in the stack for variable in unsafe { VARIABLE_STACK.iter_mut() } { if variable.name == self.name { variable.value = self.value.clone(); break; // Exit loop once the variable is found and updated }
         }
 
         pub fn get_value(&self) -> &BaseTypes {
@@ -317,7 +310,6 @@ pub mod variable {
         }
 
         pub fn increment(&mut self) {
-            println!("Incrementing variable: {}", self);
             match self.value {
                 BaseTypes::Int(ref mut i) => {
                     // Increment the integer value in place

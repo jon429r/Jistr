@@ -85,7 +85,6 @@ Boolean
 Complex Types:
 Arrays
 Dictionaries
-Custom Structs
 
 Jist will also try it's best to avoid type conflicts, meaning that the following
 
@@ -152,21 +151,23 @@ if (condition) {
 Loops
 ```jist
 //Copy code
-for (i in 0..10) {
+for (i, 0..10) {
     print(i)
 }
 
 while (condition) {
     // do something
+}
 ```
 ### Functions
-
+#### !Important Not yet implemented 
 ```jist
 //Copy code
 func add(a: int, b: int) -> int {
     return a + b;
 ```
 ### Error Handling
+#### !Important Not yet implemented 
 
 Jist uses try-catch blocks for error handling, inspired by Rust’s result and error types.
 

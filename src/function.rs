@@ -34,6 +34,7 @@ pub mod functions {
         DictionaryValuesFn(fn(&Dictionary) -> Vec<BaseTypes>),
         DictionaryPrint(fn(&Dictionary)),
 
+        DoubleFloatArrayFn(fn(f64, f64) -> Vec<f64>),
         DoubleStringNoOutFn(fn(String, String)),
         FloatFn(fn(f64)),
         DoubleFloatFn(fn(f64, f64) -> f64),
@@ -148,6 +149,18 @@ pub mod functions {
                     Box::new(result)
                 } else {
                     panic!("Expected exactly one argument for SingleStringFn");
+                }
+            }
+
+            FunctionTypes::DoubleFloatArrayFn(f) => {
+                if arguments.len() == 2 {
+                    let arg1 = arguments[0].downcast_ref::<f64>().expect("Expected f64");
+                    let arg2 = arguments[1].downcast_ref::<f64>().expect("Expected f64");
+                    let result = f(*arg1, *arg2);
+                    //println!("DoubleFloatArrayFn result: {:?}", result);
+                    return Box::new(result);
+                } else {
+                    panic!("Expected exactly two arguments for DoubleFloatArrayFn");
                 }
             }
 

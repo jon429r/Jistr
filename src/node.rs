@@ -214,19 +214,24 @@ pub mod nodes {
 
     #[derive(Debug, Clone, PartialEq)]
     pub struct ForNode {
-        pub condition: String,
+        pub variable: String,
+        pub iterable: (i32, i32),
         pub block: Vec<String>,
     }
 
     impl ForNode {
-        pub fn new(condition: String, block: Vec<String>) -> Self {
-            ForNode { condition, block }
+        pub fn new(variable: String, iterable: (i32, i32), block: Vec<String>) -> Self {
+            ForNode {
+                variable,
+                iterable,
+                block,
+            }
         }
     }
 
     impl fmt::Display for ForNode {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-            write!(f, "For: {}", self.condition)
+            write!(f, "For: {} {:?} ", self.variable, self.iterable)
         }
     }
 
@@ -905,7 +910,11 @@ pub mod nodes {
             TokenTypes::While { statement, block } => {
                 ASTNode::While(WhileNode::new(statement, block))
             }
-            TokenTypes::For { statement, block } => ASTNode::For(ForNode::new(statement, block)),
+            TokenTypes::For {
+                variable,
+                iterable: (start, end),
+                block,
+            } => ASTNode::For(ForNode::new(variable, (start, end), block)),
             TokenTypes::If { statement } => ASTNode::If(IfNode::new(statement)),
             TokenTypes::Elif { statement } => ASTNode::Elif(ElifNode::new(statement)),
             TokenTypes::Else => ASTNode::Else,

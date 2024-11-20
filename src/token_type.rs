@@ -172,7 +172,8 @@ pub mod token_types {
          * For statement
          */
         For {
-            statement: String,
+            variable: String,
+            iterable: (i32, i32),
             block: Vec<String>,
         },
         /*
@@ -200,6 +201,7 @@ pub mod token_types {
          * */
         Not,
     }
+
     impl PartialEq for TokenTypes {
         fn eq(&self, other: &Self) -> bool {
             match (self, other) {
@@ -304,12 +306,16 @@ pub mod token_types {
                 ) => a == b,
                 (
                     TokenTypes::For {
-                        statement: ref a, ..
+                        variable: ref a,
+                        iterable: ref a2,
+                        ..
                     },
                     TokenTypes::For {
-                        statement: ref b, ..
+                        variable: ref b,
+                        iterable: ref b2,
+                        ..
                     },
-                ) => a == b,
+                ) => a == b && a2 == b2,
                 _ => false,
             }
         }
@@ -341,8 +347,15 @@ pub mod token_types {
                 TokenTypes::While { statement, block } => {
                     format!("While: {}, Block: {:?}", statement, block)
                 }
-                TokenTypes::For { statement, block } => {
-                    format!("For: {}, Block: {:?}", statement, block)
+                TokenTypes::For {
+                    variable,
+                    iterable,
+                    block,
+                } => {
+                    format!(
+                        "For: Var: {}, Iter: {:?}, Block: {:?}",
+                        variable, iterable, block
+                    )
                 }
                 TokenTypes::Break => "Break".to_string(),
                 TokenTypes::Continue => "Continue".to_string(),

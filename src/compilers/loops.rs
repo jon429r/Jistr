@@ -1,6 +1,10 @@
 pub mod loop_compilers {
+    use crate::base_variable::{variable, variables::VARIABLE_STACK};
+
+    use crate::base_variable::base_types::BaseTypes;
     use crate::compiler::compilers::route_to_parser;
     use crate::compilers::conditional::conditional_compilers::compile_conditional_statement;
+    use crate::compilers::variable::search_for_var_name;
     use crate::node::nodes::match_token_to_node;
     use crate::node::nodes::ASTNode;
     use crate::statement_tokenizer::tokenizer::tokenizers::tokenize;
@@ -16,50 +20,56 @@ pub mod loop_compilers {
     }
 
     pub fn compile_for_loop(expression: &Vec<ASTNode>) -> Result<bool, Box<dyn Error>> {
-        // check the condition and run
-        // for i in 0..10 {}
-        // set i to 0 iterate until 10
-        // condtion is i < 10
-        // for i in 4..10 {}
-        // set i to 4 iterate until 10
-        // i is var call, may need to be declared, in token range: { range }
-        //
-
-        let mut tokenized: Vec<ParseInfo> = Vec::new();
-        let mut index = 0;
-
-        while index < expression.len() {
-            let node = &expression[index];
+        for node in expression {
             match node {
-                ASTNode::For(ifnode) => {
-                    let tokenized_statement = tokenize(ifnode.condition.clone());
-
-                    tokenized.extend(tokenized_statement.clone());
-                    let mut nodes: Vec<ASTNode> = Vec::new();
-                    // convert to ast nodes
-                    for token in tokenized_statement {
-                        nodes.push(match_token_to_node(token));
+                ASTNode::For(fornode) => {
+                    // Check if variable exists, else initialize it
+                    if !search_for_var_name(fornode.variable.clone()) {
+                        let new_var = variable::Variable::new(
+                            fornode.variable.clone(),
+                            fornode.iterable.0.into(),
+                            BaseTypes::Int(0),
+                        );
+                        unsafe { VARIABLE_STACK.push(new_var) };
                     }
 
-                    // call the operation function or make custom function for conditional operations
-                    let result = compile_conditional_statement(&mut nodes);
-                    match result {
-                        Ok(result) => {
-                            return Ok(result);
+                    // Main iteration logic
+                    let mut iter_result = false;
+                    for var in unsafe { VARIABLE_STACK.iter_mut() } {
+                        if var.name == fornode.variable {
+                            let current_value: i32 = var.value.clone().into();
+                            if current_value <= fornode.iterable.1 {
+                                iter_result = true;
+                            }
                         }
-                        Err(e) => {
-                            return Err(e);
+                    }
+
+                    if iter_result {
+                        // Execute the loop body
+                        for stmt in &fornode.block {
+                            let tokenized_body = tokenize(stmt.to_string());
+                            let mut nodes: Vec<ASTNode> = tokenized_body
+                                .into_iter()
+                                .map(match_token_to_node)
+                                .collect();
+                            route_to_parser(&mut nodes, 0.into())?;
                         }
+                        for var in unsafe { VARIABLE_STACK.iter_mut() } {
+                            if var.name == fornode.variable {
+                                var.increment();
+                            }
+                        }
+                    } else {
+                        return Ok(false);
                     }
                 }
-                ASTNode::Else => {}
-                _ => {}
+                _ => {
+                    // Handle other node types if necessary
+                }
             }
-            index += 1;
         }
         Ok(true)
     }
-
     pub fn compile_while_loop(expression: &mut Vec<ASTNode>) -> Result<bool, Box<dyn Error>> {
         let mut tokenized: Vec<ParseInfo> = Vec::new();
         let mut index = 0;

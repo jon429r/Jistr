@@ -26,6 +26,58 @@ pub mod loop_tokenizers {
         (condition, index)
     }
 
+    fn extract_for_condition(chars: &[char], mut index: usize) -> (String, (i32, i32), usize) {
+        let mut for_variable = String::new();
+        let mut start_range = String::new();
+        let mut end_range = String::new();
+        let mut parenthesis_count = 1;
+        let mut in_range = false;
+
+        // Extract content within parentheses
+        while index < chars.len() && parenthesis_count > 0 {
+            let c = chars[index];
+            match c {
+                '(' => parenthesis_count += 1,
+                ')' => {
+                    parenthesis_count -= 1;
+                    if parenthesis_count == 0 {
+                        index += 1;
+                        break;
+                    }
+                }
+                ' ' => {} // Ignore whitespace
+                ',' => {
+                    if !in_range {
+                        for_variable = for_variable.trim().to_string();
+                        in_range = true; // Now start parsing the range
+                    }
+                }
+                '.' => {
+                    // Detect start of range's second number (if `..` found)
+                    if !start_range.is_empty() && chars.get(index + 1) == Some(&'.') {
+                        index += 1; // Skip the second dot
+                    }
+                }
+                _ => {
+                    if !in_range {
+                        for_variable.push(c);
+                    } else if in_range && start_range.is_empty() {
+                        start_range.push(c);
+                    } else {
+                        end_range.push(c);
+                    }
+                }
+            }
+            index += 1;
+        }
+
+        // Convert ranges to integers
+        let start = start_range.trim().parse::<i32>().unwrap_or(0);
+        let end = end_range.trim().parse::<i32>().unwrap_or(0);
+
+        (for_variable, (start, end), index)
+    }
+
     fn extract_block(chars: &[char], mut index: usize) -> (Vec<String>, usize) {
         let mut block: Vec<String> = Vec::new();
         let mut line: String = String::new();
@@ -130,7 +182,8 @@ pub mod loop_tokenizers {
                 }
 
                 if chars[j] == '(' {
-                    let (condition, mut new_j) = extract_condition(&chars, j);
+                    let (for_variable, for_iterable, mut new_j) =
+                        extract_for_condition(&chars, j + 1);
                     //look for starting {
                     while new_j < chars.len() && chars[new_j].is_whitespace() || chars[new_j] == '{'
                     {
@@ -139,7 +192,8 @@ pub mod loop_tokenizers {
                     let (resulting_block, final_index) = extract_block(&chars, new_j);
                     return ParseInfo::new(
                         TokenTypes::For {
-                            statement: condition,
+                            variable: for_variable,
+                            iterable: for_iterable,
                             block: resulting_block,
                         },
                         final_index.try_into().unwrap(),

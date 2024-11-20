@@ -1,6 +1,6 @@
-let i: int = 0;
-while (i < 5) {
-    i++;
+for (i, 3..10) {
     println("Hello, World!");
-  }
-print("Goodbye, World!");
+    println(i);
+}
+
+println("Goodbye, World!");

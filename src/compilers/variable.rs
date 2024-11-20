@@ -15,6 +15,8 @@ use std::error::Error;
 
 use crate::collection::{ARRAY_STACK, DICTIONARY_STACK};
 
+use super::conditional::conditional_compilers::compile_conditional_statement;
+
 pub fn search_for_dict_name(name: String) -> bool {
     // if name is in DICTIONARY_STACK reutrn true
     let dict_stack = DICTIONARY_STACK.lock().unwrap(); // Lock the mutex
@@ -36,16 +38,15 @@ pub fn search_for_array_name(name: String) -> bool {
     false
 }
 
-/*
 pub fn search_for_var_name(name: String) -> bool {
-    let var_stack = unsafe { VARIABLE_STACK };
-    for var in var_stack.inter() {
+    let var_stack = unsafe { VARIABLE_STACK.clone() };
+    for var in var_stack.iter() {
         if var.name == name {
             return true;
         }
     }
-    return False;
-} */
+    false
+}
 
 pub fn get_dict(name: String) -> Result<Dictionary, Box<dyn Error>> {
     let dict_stack = DICTIONARY_STACK.lock().unwrap();
@@ -370,8 +371,14 @@ pub fn compile_variable_call(exp_stack: &mut Vec<ASTNode>) -> Result<bool, Box<d
                         variable.decrement();
                         return Ok(true);
                     }
+                    "<=" => {
+                        let result = compile_conditional_statement(exp_stack);
+                        return Ok(result.is_ok());
+                    }
                     _ => {
-                        return Err("Syntax Error: Unrecognized operator.".into());
+                        let error: String =
+                            format!("Syntax Error: Unrecognized operator '{}'", o.operator);
+                        return Err(error.into());
                     }
                 },
                 _ => {
@@ -732,6 +739,16 @@ pub fn parse_operator(
                     }
                 }
             }
+            ".." => {
+                if let (ASTNode::Int(left_val), ASTNode::Int(right_val)) = (left, right) {
+                    let result = left_val.value..right_val.value;
+                    let result = IntNode {
+                        value: result.start,
+                    };
+                    return Ok(ASTNode::Int(result));
+                }
+            }
+
             "==" => {
                 if let (ASTNode::Int(left_val), ASTNode::Int(right_val)) = (left, right) {
                     let result = left_val.value == right_val.value;

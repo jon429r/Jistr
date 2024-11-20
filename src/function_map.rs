@@ -40,6 +40,7 @@ lazy_static::lazy_static! {
         map.insert("input", FunctionTypes::SingleStringFn(FunctionMap::input as fn(String) -> String));
         map.insert("read", FunctionTypes::SingleStringFn(FunctionMap::read as fn(String) -> String));
         map.insert("write", FunctionTypes::DoubleStringNoOutFn(FunctionMap::write as fn(String, String)));
+        map.insert("range", FunctionTypes::DoubleFloatArrayFn(FunctionMap::range as fn(f64, f64) -> Vec<f64>));
         map.into()
     };
 
@@ -55,6 +56,19 @@ impl FunctionMap {
 
     fn write(file_path: String, content: String) {
         std::fs::write(file_path, content).unwrap();
+    }
+
+    fn range(start: f64, end: f64) -> Vec<f64> {
+        let mut output = Vec::new();
+        let mut current = start;
+
+        while current <= end {
+            output.push(current);
+            current += 1.0;
+        }
+
+        println!("{:?}", output);
+        output
     }
 
     fn max(a: f64, b: f64) -> f64 {

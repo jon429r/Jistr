@@ -80,7 +80,7 @@ pub mod basic_tokenizers {
     ) -> ParseInfo {
         let two_chars = format!("{}{}", char, next_char);
         match two_chars.to_string().as_str() {
-            "==" | "!=" | ">=" | "<=" | "&&" | "||" | "++" | "--" => {
+            "==" | "!=" | ">=" | "<=" | "&&" | "||" | "++" | "--" | ".." => {
                 let chars_read = 2;
                 return ParseInfo::new(
                     TokenTypes::Operator,
