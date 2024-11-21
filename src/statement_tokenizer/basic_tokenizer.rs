@@ -73,10 +73,10 @@ pub mod basic_tokenizers {
     }
 
     pub fn read_operators(
-        expression: String,
+        _expression: String,
         char: char,
         next_char: char,
-        index: usize,
+        _index: usize,
     ) -> ParseInfo {
         let two_chars = format!("{}{}", char, next_char);
         match two_chars.to_string().as_str() {

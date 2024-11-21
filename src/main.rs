@@ -29,12 +29,16 @@ mod statement_tokenizer {
     pub mod variable_tokenizer;
 }
 
+use crossterm::{
+    event::{self, KeyCode, KeyEvent},
+    terminal::{disable_raw_mode, enable_raw_mode},
+};
 use std::error::Error;
 use std::ffi::OsStr;
 use std::fs;
+use std::io::{self, Write};
 use std::path::Path;
 use std::{env, usize};
-
 //use crate::collection::collections::{Array, Dictionary};
 use crate::node::nodes::ASTNode;
 use base_variable::variables::VARIABLE_STACK;
@@ -398,13 +402,6 @@ fn parse_file(file_path: &str) -> Result<(), Box<dyn Error>> {
 
     Ok(())
 }
-
-use crossterm::{
-    event::{self, KeyCode, KeyEvent},
-    terminal::{self, disable_raw_mode, enable_raw_mode},
-    ExecutableCommand,
-};
-use std::io::{self, Write};
 
 fn get_input(
     history: &mut Vec<String>,

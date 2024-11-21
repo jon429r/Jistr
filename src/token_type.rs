@@ -51,6 +51,7 @@ pub mod token_types {
             name: String,
             return_type: String,
             arguments: Vec<(String, String, String)>,
+            block: Vec<String>,
         },
         /*
          * funcname()
@@ -244,11 +245,13 @@ pub mod token_types {
                         name: ref name_a,
                         return_type: ref return_a,
                         arguments: ref args_a,
+                        ..
                     },
                     TokenTypes::Function {
                         name: ref name_b,
                         return_type: ref return_b,
                         arguments: ref args_b,
+                        ..
                     },
                 ) => name_a == name_b && return_a == return_b,
 
@@ -332,13 +335,17 @@ pub mod token_types {
                     name,
                     return_type,
                     arguments,
+                    block,
                 } => {
                     let mut arguments_str = String::new();
                     for arg in arguments {
                         arguments_str.push_str(&format!("{:?} ", arg));
                     }
 
-                    format!("Function: {} {} {:?}", name, return_type, arguments_str)
+                    format!(
+                        "Function: {} {} {:?}, {:?}",
+                        name, return_type, arguments_str, block
+                    )
                 }
                 TokenTypes::Not => "Not".to_string(),
                 TokenTypes::Else => "Else".to_string(),

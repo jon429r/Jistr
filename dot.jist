@@ -1,5 +1,5 @@
 
-let first: int = input("First number");
-let second: int = input("Second number");
-let sum: int = first + second;
-println(sum);
+for(i, 1..5) {
+    print(i);
+  }
+println("hello world");

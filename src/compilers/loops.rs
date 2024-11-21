@@ -125,6 +125,9 @@ pub mod loop_compilers {
                         match compile_conditional_statement(&mut condition_nodes.clone()) {
                             Ok(result) => {
                                 evaluation_result = result; // Store the result from the function
+                                if !evaluation_result {
+                                    set_make_loop(false);
+                                }
                             }
                             Err(e) => {
                                 return Err(e);
@@ -134,13 +137,13 @@ pub mod loop_compilers {
                         //println!("Condition re-evaluation result: {}", result);
 
                         if !evaluation_result {
+                            set_make_loop(false);
                             return Ok(false); // Exit the loop if the condition is false
                         }
                     }
 
                     set_make_loop(false);
 
-                    // Increment index to move to the next node after the while
                     index += 1;
                     //println!("Moving to next node after while loop.");
                     continue; // Skip to the next iteration
@@ -149,9 +152,9 @@ pub mod loop_compilers {
                     println!("Unhandled node: {:?}", node);
                 }
             }
-            index += 1; // Move to the next node
+            index += 1;
         }
         //println!("While loop processing completed.");
-        return Ok(true); // Indicate successful processing
+        Ok(true)
     }
 }

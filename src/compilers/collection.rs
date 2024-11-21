@@ -3,8 +3,6 @@ use crate::collection::collections::{Array, Dictionary};
 use crate::collection::ARRAY_STACK;
 use crate::collection::DICTIONARY_STACK;
 use crate::node::nodes::ASTNode;
-//use std::sync::Mutex;
-//use lazy_static::lazy_static;
 
 use std::fmt;
 
@@ -25,16 +23,29 @@ impl fmt::Display for CollectionError {
 
 impl std::error::Error for CollectionError {}
 
+/// Add a dictionary to the dictionary stack
+///
+///param dict: Dictionary -> The dictionary to be added
+///
+///return: None
 fn add_to_dictionary_stack(dict: Dictionary) {
     DICTIONARY_STACK.lock().unwrap().push(dict.clone());
-    // You can still use `dict` after this line because we cloned it
-    //println!("dict pushed to stack")
 }
 
+/// Add an array to the array stack
+///
+/// param array: Array -> The array to be added
+///
+/// return: None
 fn add_to_array_stack(array: Array) {
     ARRAY_STACK.lock().unwrap().push(array.clone());
 }
 
+/// Parse a collection call
+///
+/// param expression: &[ASTNode] -> The expression to parse for call
+///
+/// return: Result<(String, Vec<BaseTypes>), CollectionError>
 pub fn parse_collection_call(
     expression: &[ASTNode],
 ) -> Result<(String, Vec<BaseTypes>), CollectionError> {
@@ -49,6 +60,11 @@ pub fn parse_collection_call(
     Ok((name, values))
 }
 
+/// Parse a collection declaration
+///
+/// param expression: &[ASTNode] -> The expression to parse for declaration
+///
+/// return: Result<(), CollectionError>
 pub fn parse_collection_declaration(expression: &[ASTNode]) -> Result<(), CollectionError> {
     // Check if the expression has any nodes
     if expression.is_empty() {
@@ -102,6 +118,13 @@ pub fn parse_collection_declaration(expression: &[ASTNode]) -> Result<(), Collec
     ))
 }
 
+/// Parse an array declaration
+///
+/// param expression: &[ASTNode] -> The expression to parse for declaration
+/// param single_key_type: BaseTypes -> The type of the array
+/// param name: String -> The name of the array
+///
+/// return: Result<(), CollectionError>
 fn parse_array_declaration(
     expression: &[ASTNode],
     single_key_type: BaseTypes,
@@ -131,6 +154,14 @@ fn parse_array_declaration(
     Ok(())
 }
 
+/// Parse a dictionary declaration
+///
+/// param expression: &[ASTNode] -> The expression to parse for declaration
+/// param key_type: BaseTypes -> The key type of the dictionary
+/// param value_type: BaseTypes -> The value type of the dictionary
+/// param name: String -> The name of the dictionary
+///
+/// return: Result<(), CollectionError>
 fn parse_dict_declaration(
     expression: &[ASTNode],
     key_type: BaseTypes,
@@ -192,6 +223,15 @@ fn parse_dict_declaration(
     Ok(())
 }
 
+/// Handle a key-value pair
+///
+/// param base_value: BaseTypes -> The value to be added
+/// param key: &mut Option<BaseTypes> -> The key to be added
+/// param have_fat_arrow: &mut bool -> Whether a fat arrow has been encountered, indicating key-value pairs
+/// param values: &mut Vec<(BaseTypes, BaseTypes)> -> The vector of key-value pairs
+///
+/// return: Result<(), CollectionError>
+///
 fn handle_key_value(
     base_value: BaseTypes,
     key: &mut Option<BaseTypes>,

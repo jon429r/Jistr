@@ -1,6 +1,8 @@
-for (i, 3..10) {
-    println("Hello, World!");
-    println(i);
+let i: int = 0;
+while (i < 5) {
+  println("Hello, World!");
+  i++;
 }
 
+println("Goodbye, World!");
 println("Goodbye, World!");

@@ -764,6 +764,7 @@ pub mod nodes {
         pub name: String,
         pub return_type: String,
         pub arguments: Vec<(String, String, String)>,
+        pub block: Vec<String>,
     }
 
     impl FunctionNode {
@@ -771,11 +772,13 @@ pub mod nodes {
             name: String,
             return_type: String,
             arguments: Vec<(String, String, String)>,
+            block: Vec<String>,
         ) -> Self {
             FunctionNode {
                 name,
-                return_type: return_type,
-                arguments: arguments,
+                return_type,
+                arguments,
+                block,
             }
         }
         pub fn display_info(&self) {
@@ -867,7 +870,8 @@ pub mod nodes {
                 name,
                 return_type,
                 arguments,
-            } => ASTNode::Function(FunctionNode::new(name, return_type, arguments)),
+                block,
+            } => ASTNode::Function(FunctionNode::new(name, return_type, arguments, block)),
             TokenTypes::FunctionArguments => {
                 ASTNode::FunctionArguments(FunctionArgumentsNode::new(parse_info.value))
             }

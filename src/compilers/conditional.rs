@@ -15,7 +15,10 @@ pub mod conditional_compilers {
 
     /// Compiles a conditional statement
     /// returns a boolean value or an error
-    /// true if the conditional statement is true and false if no
+    ///
+    /// params: expression: &mut Vec<ASTNode> -> The expression to be compiled
+    ///
+    /// returns: Result<bool, Box<dyn Error>> -> true if the conditional statement is true and false if not
     pub fn compile_conditional_statement(
         expression: &mut Vec<ASTNode>,
     ) -> Result<bool, Box<dyn Error>> {
@@ -152,60 +155,57 @@ pub mod conditional_compilers {
     }
 
     /// Compiles an if/elif/else statements
-    /// returns a boolean value or an error
-    /// true if the conditional statement is true and false if not
+    ///
+    ///params: expression: &mut Vec<ASTNode> -> The expression to be compiled
+    ///
+    ///returns: Result<bool, Box<dyn Error>> -> true if the conditional statement is true else false
     pub fn compile_if_elif_else_statement(
         expression: &mut Vec<ASTNode>,
     ) -> Result<bool, Box<dyn Error>> {
         let mut tokenized: Vec<ParseInfo> = Vec::new();
-        let mut index = 0;
+        let index = 0;
 
-        while index < expression.len() {
-            let node = &expression[index];
-            match node {
-                ASTNode::If(ifnode) => {
-                    let tokenized_statement = tokenize(ifnode.condition.clone());
+        let node = &expression[index];
+        match node {
+            ASTNode::If(ifnode) => {
+                let tokenized_statement = tokenize(ifnode.condition.clone());
 
-                    tokenized.extend(tokenized_statement.clone());
-                    let mut nodes: Vec<ASTNode> = Vec::new();
-                    // convert to ast nodes
-                    for token in tokenized_statement {
-                        nodes.push(match_token_to_node(token));
-                    }
-
-                    // call the operation function or make custom function for conditional operations
-                    let result = compile_conditional_statement(&mut nodes);
-
-                    //if result is true or false, return the result
-                    //if result is an error, return the error
-                    return match result {
-                        Ok(result) => Ok(result),
-                        Err(e) => Err(e),
-                    };
+                tokenized.extend(tokenized_statement.clone());
+                let mut nodes: Vec<ASTNode> = Vec::new();
+                // convert to ast nodes
+                for token in tokenized_statement {
+                    nodes.push(match_token_to_node(token));
                 }
-                ASTNode::Elif(elifnode) => {
-                    let tokenized_statement = tokenize(elifnode.condition.clone());
-                    tokenized.extend(tokenized_statement.clone());
-                    let mut nodes: Vec<ASTNode> = Vec::new();
-                    // convert to ast nodes
-                    for token in tokenized_statement {
-                        nodes.push(match_token_to_node(token));
-                    } // call the operation function or make custom function for conditional operations
-                    let result = compile_conditional_statement(&mut nodes);
-                    return match result {
-                        Ok(result) => Ok(result),
-                        Err(e) => Err(e),
-                    };
-                }
-                ASTNode::Else => {
-                    // if there is an else statement, return true
-                    return Ok(true);
-                }
-                _ => {
-                    return Err("Error: Invalid statement".into());
+
+                // call the operation function or make custom function for conditional operations
+                let result = compile_conditional_statement(&mut nodes);
+
+                //if result is true or false, return the result
+                //if result is an error, return the error
+                match result {
+                    Ok(result) => Ok(result),
+                    Err(e) => Err(e),
                 }
             }
+            ASTNode::Elif(elifnode) => {
+                let tokenized_statement = tokenize(elifnode.condition.clone());
+                tokenized.extend(tokenized_statement.clone());
+                let mut nodes: Vec<ASTNode> = Vec::new();
+                // convert to ast nodes
+                for token in tokenized_statement {
+                    nodes.push(match_token_to_node(token));
+                } // call the operation function or make custom function for conditional operations
+                let result = compile_conditional_statement(&mut nodes);
+                match result {
+                    Ok(result) => Ok(result),
+                    Err(e) => Err(e),
+                }
+            }
+            ASTNode::Else => {
+                // if there is an else statement, return true
+                Ok(true)
+            }
+            _ => Err("Error: Invalid statement".into()),
         }
-        return Ok(true);
     }
 }

@@ -17,17 +17,23 @@ use crate::function_map::FUNCTIONS;
 use std::any::Any;
 use std::error::Error;
 
-use crate::node::nodes::to_base_type;
 use crate::statement_tokenizer::tokenizer::tokenizers::tokenize;
 
+/// add the function in the function stack
+///
+/// params: function_name: &str -> The name of the function to be added
+///
+/// Returns: None
 fn add_to_function_stack(func: Function) {
     FUNCTION_STACK.lock().unwrap().push(func);
-    //USER_FUNCTIONS.lock().unwrap().push(func);
-    // You can still use `dict` after this line because we cloned it
-    //println!("dict pushed to stack")
 }
 
-fn find_function_in_stack(function_name: &str) -> Function {
+/// Find the function in the function stack
+///
+/// params: function_name: &str -> The name of the function to be found
+///
+/// Returns: Function: Fucntion -> The function found
+fn _find_function_in_stack(function_name: &str) -> Function {
     let function_stack = FUNCTION_STACK.lock().unwrap(); // Lock the Mutex, unwrap if the lock is successful
 
     for function in function_stack.iter() {
@@ -40,6 +46,15 @@ fn find_function_in_stack(function_name: &str) -> Function {
     exit(1);
 }
 
+/// Parse the function declaration
+///
+/// params: expression: &[ASTNode] -> The expression to be parsed
+/// params: function_name: &str -> The name of the function
+/// params: parameters: Vec<Variable> -> The parameters of the function
+/// params: return_type: BaseTypes -> The return type of the function
+/// params: function_body: Vec<ASTNode> -> The body of the function
+///
+/// Returns: Result<bool, Box<dyn Error>> -> The result of the parsing
 pub fn parse_function_declaration(expression: &[ASTNode]) -> Result<bool, Box<dyn Error>> {
     let mut function_name: String = String::new();
     let mut parameters: Vec<Variable> = Vec::new();
@@ -148,9 +163,16 @@ pub fn parse_function_declaration(expression: &[ASTNode]) -> Result<bool, Box<dy
         i += 1;
     }
     // Placeholder return value, should likely be more meaningful
-    return Ok(true);
+    Ok(true)
 }
 
+/// Parse the function call includes dot notation
+///
+/// Params: expression: &Vec<ASTNode> -> The expression to be parsed
+/// Params: dot_notation: String -> The dot notation
+/// Params: array: Option<Array> -> The array
+///
+/// Returns: Result<BaseTypes, Box<dyn Error>> -> The result of the parsing
 pub fn parse_function_call(
     expression: &Vec<ASTNode>,
     dot_notation: String,
@@ -176,16 +198,15 @@ pub fn parse_function_call(
                         parameter_and_value = parse_function_call_arguments(&expression[i + 1..])?;
                         break;
                     }
-                    ASTNode::VariableCall(v) => {
+                    ASTNode::VariableCall(_) => {
                         // get variable value
                         let var_value = parse_variable_call(&expression[i]);
                         parameter_and_value.push(var_value?.1);
                     }
                     ASTNode::Int(n) => {
-                        let arg1 = (String::new(), BaseTypes::Int(n.value.clone()));
+                        let _arg1 = (String::new(), BaseTypes::Int(n.value));
                         parameter_and_value.push(n.value.into());
                     }
-
                     _ => return Err("Unhandled node in function call: ".into()),
                 }
                 i += 1;
@@ -205,8 +226,8 @@ pub fn parse_function_call(
                 None,
             );
             match result {
-                Ok(result) => return Ok(result),
-                Err(e) => return Err(e),
+                Ok(result) => Ok(result),
+                Err(e) => Err(e),
             }
         }
         "array" => {
@@ -219,8 +240,8 @@ pub fn parse_function_call(
                 None,
             );
             match result {
-                Ok(result) => return Ok(result),
-                Err(e) => return Err(e),
+                Ok(result) => Ok(result),
+                Err(e) => Err(e),
             }
         }
         "variable" => {
@@ -233,8 +254,8 @@ pub fn parse_function_call(
                 variable,
             );
             match result {
-                Ok(result) => return Ok(result),
-                Err(e) => return Err(e),
+                Ok(result) => Ok(result),
+                Err(e) => Err(e),
             }
         }
         "None" => {
@@ -259,13 +280,24 @@ pub fn parse_function_call(
     }
 }
 
+/// Get the function result
+///
+/// params: function_name: String -> The name of the function
+/// params: parameter_and_value: &mut Vec<BaseTypes> -> The parameters and values
+/// params: dot_notation: String -> The dot notation -> either dictionary, array or variable else
+/// no dot notation
+/// params: array: Option<Array> -> The array if dot call
+/// params: dictionary: Option<Dictionary> -> The dictionary if dot call
+/// params: variable: Option<Variable> -> The variable if dot call
+///
+/// Returns: Result<BaseTypes, Box<dyn Error>> -> The result of the function
 pub fn get_function_result(
     function_name: String,
     parameter_and_value: &mut Vec<BaseTypes>,
     dot_notation: String,
     array: Option<Array>,
     dictionary: Option<Dictionary>,
-    variable: Option<Variable>,
+    _variable: Option<Variable>,
 ) -> Result<BaseTypes, Box<dyn Error>> {
     let std_functions = FUNCTIONS
         .lock()
@@ -310,6 +342,11 @@ pub fn get_function_result(
     Err("Function not found".into())
 }
 
+/// Adjust parameter types to floats if needed to match function signatures
+///
+/// params: parameter_and_value: &mut Vec<BaseTypes> -> The parameters and values
+///
+/// Returns: None
 fn adjust_parameter_types(parameter_and_value: &mut Vec<BaseTypes>) {
     for param in parameter_and_value.iter_mut().take(2) {
         if let BaseTypes::Int(x) = *param {
@@ -318,10 +355,18 @@ fn adjust_parameter_types(parameter_and_value: &mut Vec<BaseTypes>) {
     }
 }
 
+/// Call the function with parameters includes dot calls
+///
+/// params: func: &FunctionTypes -> The function to be called
+/// params: array: Option<Array> -> The array if dot call
+/// params: dict: Option<Dictionary> -> The dictionary if dot call
+/// params: parameter_and_value: &mut Vec<BaseTypes> -> The parameters and values
+///
+/// returns: Result<BaseTypes, Box<dyn Error>> -> The result of the function
 fn call_function_with_params(
-    func: &FunctionTypes,     // Adjust type as needed
-    array: Option<Array>,     // Adjust type as needed
-    dict: Option<Dictionary>, // Adjust type as needed
+    func: &FunctionTypes,
+    array: Option<Array>,
+    dict: Option<Dictionary>,
     parameter_and_value: &mut Vec<BaseTypes>,
 ) -> Result<BaseTypes, Box<dyn Error>> {
     let mut params: Vec<Box<dyn Any>> = Vec::new();
@@ -402,6 +447,11 @@ fn call_standard_function(
     }
 }
 
+/// Parse the function call arguments
+///
+/// params: expression: &[ASTNode] -> The expression to be parsed
+///
+/// returns: Result<Vec<BaseTypes>, Box<dyn Error>> -> The result of the parsing
 fn parse_function_call_arguments(expression: &[ASTNode]) -> Result<Vec<BaseTypes>, Box<dyn Error>> {
     let mut arguments: Vec<BaseTypes> = Vec::new();
     let mut i = 0;
@@ -454,7 +504,7 @@ fn parse_function_call_arguments(expression: &[ASTNode]) -> Result<Vec<BaseTypes
             ASTNode::FunctionArguments(a) => {
                 // Process function arguments
                 //call tokenizer
-                let mut result = tokenize(a.value.clone());
+                let result = tokenize(a.value.clone());
                 let mut output = Vec::new();
                 for node in result {
                     output.push(match_token_to_node(node));
@@ -471,5 +521,5 @@ fn parse_function_call_arguments(expression: &[ASTNode]) -> Result<Vec<BaseTypes
 
     // Return the collected arguments
     //println!("@@@@@@@@@@@Arguments: {:?}", arguments);
-    return Ok(arguments);
+    Ok(arguments)
 }

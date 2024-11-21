@@ -275,6 +275,7 @@ pub mod function_tokenizers {
                             name: function_name.clone(),
                             arguments: function_arguments.clone(),
                             return_type: return_type.clone(),
+                            block: Vec::new(),
                         },
                         (j - index).try_into().unwrap(),
                         function_name.to_string(),
