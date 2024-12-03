@@ -44,6 +44,7 @@ pub mod nodes {
 
     #[derive(Debug, Clone, PartialEq)]
     pub enum ASTNode {
+        Return(ReturnNode),
         ObjectCall(ObjectCallNode),
         CollectionCall(CollectionCallNode),
         Dot(DotNode),
@@ -52,9 +53,9 @@ pub mod nodes {
         If(IfNode),
         Elif(ElifNode),
         Else,
-        Try,
-        Catch,
-        Finally,
+        Try(TryNode),
+        Catch(CatchNode),
+        Finally(FinallyNode),
         SemiColon,
         Operator(OperatorNode),
         Int(IntNode),
@@ -101,9 +102,9 @@ pub mod nodes {
                 ASTNode::If(i) => write!(f, "{}", i),
                 ASTNode::Elif(e) => write!(f, "{}", e),
                 ASTNode::Else => write!(f, "Else"),
-                ASTNode::Try => write!(f, "Try"),
-                ASTNode::Catch => write!(f, "Catch"),
-                ASTNode::Finally => write!(f, "Finally"),
+                ASTNode::Try(t) => write!(f, "Try"),
+                ASTNode::Catch(c) => write!(f, "Catch"),
+                ASTNode::Finally(n) => write!(f, "Finally"),
                 ASTNode::Collection(c) => write!(f, "{:?}", c),
                 ASTNode::SemiColon => write!(f, "SemiColon"),
                 ASTNode::Operator(o) => write!(f, "{}", o),
@@ -134,7 +135,25 @@ pub mod nodes {
                 ASTNode::FunctionArguments(args) => write!(f, "{}", args), // Call Display
                 ASTNode::FatArrow => write!(f, "FatArrow"),
                 ASTNode::None => write!(f, "None"),
+                ASTNode::Return(r) => write!(f, "{}", r),
             }
+        }
+    }
+
+    #[derive(Debug, Clone, PartialEq)]
+    pub struct ReturnNode {
+        pub value: String,
+    }
+
+    impl ReturnNode {
+        pub fn new(value: String) -> Self {
+            ReturnNode { value }
+        }
+    }
+
+    impl fmt::Display for ReturnNode {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            write!(f, "Return: {}", self.value)
         }
     }
 
@@ -285,11 +304,13 @@ pub mod nodes {
     }
 
     #[derive(Debug, Clone, PartialEq)]
-    pub struct TryNode;
+    pub struct TryNode {
+        pub block: Vec<String>,
+    }
 
     impl TryNode {
-        pub fn new() -> Self {
-            TryNode
+        pub fn new(block: Vec<String>) -> Self {
+            TryNode { block }
         }
     }
 
@@ -300,11 +321,13 @@ pub mod nodes {
     }
 
     #[derive(Debug, Clone, PartialEq)]
-    pub struct CatchNode;
+    pub struct CatchNode {
+        pub block: Vec<String>,
+    }
 
     impl CatchNode {
-        pub fn new() -> Self {
-            CatchNode
+        pub fn new(block: Vec<String>) -> Self {
+            CatchNode { block }
         }
     }
 
@@ -315,11 +338,13 @@ pub mod nodes {
     }
 
     #[derive(Debug, Clone, PartialEq)]
-    pub struct FinallyNode;
+    pub struct FinallyNode {
+        pub block: Vec<String>,
+    }
 
     impl FinallyNode {
-        pub fn new() -> Self {
-            FinallyNode
+        pub fn new(block: Vec<String>) -> Self {
+            FinallyNode { block }
         }
     }
 
@@ -922,10 +947,11 @@ pub mod nodes {
             TokenTypes::If { statement } => ASTNode::If(IfNode::new(statement)),
             TokenTypes::Elif { statement } => ASTNode::Elif(ElifNode::new(statement)),
             TokenTypes::Else => ASTNode::Else,
-            TokenTypes::Try => ASTNode::Try,
-            TokenTypes::Catch => ASTNode::Catch,
-            TokenTypes::Finally => ASTNode::Finally,
+            TokenTypes::Try { block } => ASTNode::Try(TryNode::new(block)),
+            TokenTypes::Catch { block } => ASTNode::Catch(CatchNode::new(block)),
+            TokenTypes::Finally { block } => ASTNode::Finally(FinallyNode::new(block)),
             TokenTypes::ObjectCall { name } => ASTNode::ObjectCall(ObjectCallNode::new(name)),
+            TokenTypes::ReturnStatement { value } => ASTNode::Return(ReturnNode::new(value)),
 
             _ => {
                 panic!("Unrecognized token: {:?}", parse_info.token);

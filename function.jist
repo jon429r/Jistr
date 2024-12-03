@@ -1,0 +1,10 @@
+func addtwo(a: int, b: int) -> int {
+  a+b;
+  return sum;
+}
+
+let i = 1+1;
+print(i);
+let result: int = addtwo(1, 2);
+print(result);
+

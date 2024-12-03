@@ -1,6 +1,9 @@
-use crate::base_variable::variable::Variable;
+use crate::base_variable::base_types::StringWrapper;
+use crate::base_variable::variable::{self, Variable};
 use crate::collection::collections::{Array, Dictionary};
 use crate::collection::{ARRAY_FUNCTIONS, DICTIONARY_FUNCTIONS};
+use crate::compiler::compilers::route_to_parser;
+use crate::compilers::conditional::conditional_compilers::string_to_ast;
 use crate::node::nodes::{match_token_to_node, ASTNode};
 use std::process::exit;
 
@@ -12,8 +15,8 @@ use crate::base_variable::variables::VARIABLE_STACK;
 use crate::compilers::variable::parse_variable_call;
 use crate::function::functions::call_function;
 use crate::function::functions::Function;
-use crate::function::FUNCTION_STACK;
-use crate::function_map::FUNCTIONS;
+use crate::function::{FUNCTION_STACK, USER_FUNCTION_STACK};
+use crate::function_map::{FUNCTIONS, USER_FUNCTIONS};
 use std::any::Any;
 use std::error::Error;
 
@@ -25,7 +28,7 @@ use crate::statement_tokenizer::tokenizer::tokenizers::tokenize;
 ///
 /// Returns: None
 fn add_to_function_stack(func: Function) {
-    FUNCTION_STACK.lock().unwrap().push(func);
+    USER_FUNCTION_STACK.lock().unwrap().push(func.clone());
 }
 
 /// Find the function in the function stack
@@ -33,136 +36,95 @@ fn add_to_function_stack(func: Function) {
 /// params: function_name: &str -> The name of the function to be found
 ///
 /// Returns: Function: Fucntion -> The function found
-fn _find_function_in_stack(function_name: &str) -> Function {
-    let function_stack = FUNCTION_STACK.lock().unwrap(); // Lock the Mutex, unwrap if the lock is successful
+fn find_function_in_stack(function_name: &str) -> Option<Function> {
+    let function_stack = USER_FUNCTION_STACK.lock().unwrap(); // Lock the Mutex, unwrap if the lock is successful
 
     for function in function_stack.iter() {
         if function_name == function.name {
-            return function.clone();
+            return Some(function.clone());
         }
     }
+    None
+}
 
-    eprintln!("Function not in user functions");
-    exit(1);
+fn is_function_in_stack(function_name: &str) -> bool {
+    let function_stack = USER_FUNCTION_STACK.lock().unwrap();
+    for function in function_stack.iter() {
+        if function_name == function.name {
+            return true;
+        }
+    }
+    false
+}
+
+fn add_to_variable_stack(var: Variable) {
+    unsafe { VARIABLE_STACK.clone() }.push(var);
+}
+
+fn remove_from_variable_stack(var: Variable) {
+    let mut index = 0;
+    for arg in unsafe { VARIABLE_STACK.clone() } {
+        if arg.name == var.name {
+            unsafe { VARIABLE_STACK.clone() }.remove(index);
+        }
+        index += 1;
+    }
 }
 
 /// Parse the function declaration
 ///
 /// params: expression: &[ASTNode] -> The expression to be parsed
-/// params: function_name: &str -> The name of the function
-/// params: parameters: Vec<Variable> -> The parameters of the function
-/// params: return_type: BaseTypes -> The return type of the function
-/// params: function_body: Vec<ASTNode> -> The body of the function
 ///
 /// Returns: Result<bool, Box<dyn Error>> -> The result of the parsing
 pub fn parse_function_declaration(expression: &[ASTNode]) -> Result<bool, Box<dyn Error>> {
-    let mut function_name: String = String::new();
-    let mut parameters: Vec<Variable> = Vec::new();
-    let mut return_type: BaseTypes = BaseTypes::Null;
-    let mut function_body: Vec<ASTNode> = Vec::new();
+    let function_name: String;
+    let mut parameters: Vec<(String, String, String)>;
+    let mut function_return_type: String;
+    let mut function_body: Vec<String>;
 
-    let mut i = 0;
-    while i < expression.len() {
-        match &expression[i] {
-            ASTNode::Function(f) => {
-                // Store function name and return type
-                function_name = f.name.clone();
-                return_type = BaseTypes::StringWrapper(f.return_type.clone());
-
-                for arg in &f.arguments {
-                    let var_type = match arg.2.clone().as_str() {
-                        "int" => BaseTypes::Int(0),
-                        "float" => BaseTypes::Float(0.0),
-                        "string" => BaseTypes::StringWrapper(String::new()),
-                        "boolean" => BaseTypes::Bool(false),
-                        "char" => BaseTypes::Char('\0'),
-                        "null" => BaseTypes::Null,
-                        _ => {
-                            return Err(
-                                "Syntax Error: Unrecognized type in function declaration".into()
-                            );
-                        }
-                    };
-
-                    let var_value = match arg.2.clone().as_str() {
-                        "int" => arg
-                            .1
-                            .parse::<i32>()
-                            .map(BaseTypes::Int)
-                            .unwrap_or(BaseTypes::Null),
-                        "float" => arg
-                            .1
-                            .parse::<f64>()
-                            .map(BaseTypes::Float)
-                            .unwrap_or(BaseTypes::Null),
-                        "string" => BaseTypes::StringWrapper(arg.1.clone()),
-                        "boolean" => arg
-                            .1
-                            .parse::<bool>()
-                            .map(BaseTypes::Bool)
-                            .unwrap_or(BaseTypes::Null),
-                        "char" => {
-                            if let Some(first_char) = arg.1.chars().next() {
-                                BaseTypes::Char(first_char)
-                            } else {
-                                BaseTypes::Null // Handle empty char case
-                            }
-                        }
-                        "null" => BaseTypes::Null,
-                        _ => {
-                            return Err("Unrecognized type in function declaration".into());
-                            // Exit if an unrecognized type is found
-                        }
-                    };
-
-                    // Create the variable and add it to the parameters
-                    let var = Variable::new(
-                        arg.0.clone(), // Variable name
-                        var_type,      // Variable type
-                        var_value,     // Variable value
-                    );
-                    parameters.push(var);
-                }
-            }
-            ASTNode::LeftCurly => {
-                // Now we need to store the function body
-                function_body.clear(); // Clear any previous function body
-                i += 1; // Move to the next node after '{'
-
-                // Collect nodes until we reach the matching right curly brace
-                let mut curly_brace_count = 1; // We've encountered one '{'
-
-                while i < expression.len() {
-                    match &expression[i] {
-                        ASTNode::LeftCurly => curly_brace_count += 1,
-                        ASTNode::RightCurly => {
-                            curly_brace_count -= 1;
-                            if curly_brace_count == 0 {
-                                break; // Found matching '}'
-                            }
-                        }
-                        _ => {}
-                    }
-                    function_body.push(expression[i].clone());
-                    i += 1;
-                }
-
-                // After collecting the function body, create the Function object
-                let function = Function::new(
-                    function_name.clone(),
-                    return_type.clone(),
-                    parameters.clone(),
-                    function_body.clone(),
-                );
-                // add to FUNCTION_STACK
-                println!("Function: {}", function);
-                add_to_function_stack(function);
-            }
-            _ => println!("Unhandled node: {:?}", expression[i]),
+    match expression[0].clone() {
+        ASTNode::Function(func) => {
+            function_name = func.name.clone();
+            function_return_type = func.return_type.clone();
+            parameters = func.arguments.clone();
+            function_body = func.block.clone();
         }
-        i += 1;
+        _ => {
+            return Err("Syntax Error: Function declaration must start with a function".into());
+        }
     }
-    // Placeholder return value, should likely be more meaningful
+
+    // turn function body into vec of ast nodes
+    let mut function_body_nodes: Vec<ASTNode> = Vec::new();
+    for line in function_body {
+        let result = tokenize(line);
+        for node in result {
+            function_body_nodes.push(match_token_to_node(node));
+        }
+    }
+
+    // make arguments into vec of vars
+    let mut args: Vec<Variable> = Vec::new();
+    for arg in parameters.iter() {
+        let var = Variable {
+            name: arg.0.clone(),
+            value: BaseTypes::Null,
+            var_type: arg.1.clone().into(),
+        };
+        args.push(var);
+    }
+
+    use crate::function::functions::Function;
+    let function = Function {
+        name: function_name.clone(),
+        return_type: function_return_type.clone().into(),
+        arguments: args.clone(),
+        body: function_body_nodes.clone(),
+    };
+
+    // add function to user function stack
+    add_to_function_stack(function);
+
     Ok(true)
 }
 
@@ -327,6 +289,34 @@ pub fn get_function_result(
             // Handle variable logic if needed
         }
         _ => {}
+    }
+
+    if let Some(func) = find_function_in_stack(function_name.as_str()) {
+        // initalize params as vars
+        for arg in func.arguments.clone() {
+            add_to_variable_stack(arg)
+        }
+        let result: BaseTypes;
+
+        for line in func.body {
+            match line {
+                ASTNode::Return(r) => {
+                    println!("value {}", r.value);
+                    let mut line = string_to_ast(r.value);
+                    let result = route_to_parser(&mut line, 0.into());
+                    println!("result {:?}", result);
+                }
+                _ => println!("line {}", line),
+            }
+        }
+
+        // clean up vars after running
+        for arg in func.arguments {
+            remove_from_variable_stack(arg)
+        }
+
+        let result = 0.into();
+        return Ok(result);
     }
 
     // Handle standard functions
@@ -513,7 +503,8 @@ fn parse_function_call_arguments(expression: &[ASTNode]) -> Result<Vec<BaseTypes
                 arguments.push(variable?.1);
             }
             _ => {
-                return Err("Unhandled node in arguments".into());
+                let error = format!("Unhandled node in arguments: {:?}", expression[i]);
+                return Err(error.into());
             }
         }
         i += 1;

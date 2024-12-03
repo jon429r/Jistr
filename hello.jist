@@ -1,8 +1,7 @@
-let i: int = 0;
-while (i < 5) {
-  println("Hello, World!");
-  i++;
-}
+let b: int = 2+2;
+println(b);
 
-println("Goodbye, World!");
-println("Goodbye, World!");
+func sumtwo (a: int, b: int) -> int {
+    let i: int = 1+1;
+    print(i);
+  }

@@ -4,6 +4,7 @@ use std::sync::Mutex;
 
 lazy_static! {
     pub static ref FUNCTION_STACK: Mutex<Vec<Function>> = Mutex::new(Vec::new());
+    pub static ref USER_FUNCTION_STACK: Mutex<Vec<Function>> = Mutex::new(Vec::new());
 }
 
 pub mod functions {
@@ -16,6 +17,7 @@ pub mod functions {
     use std::fmt;
 
     pub enum FunctionTypes {
+        // std array functions
         ArrayPopFn(fn(&mut Array) -> Option<BaseTypes>),
         ArrayPushFn(fn(&mut Array, BaseTypes)),
         ArrayRemoveFn(fn(&mut Array, BaseTypes)),
@@ -25,6 +27,7 @@ pub mod functions {
         ArrayAppendFn(fn(&mut Array, BaseTypes)),
         ArrayPrint(fn(&Array)),
 
+        // std dictionary functions
         DictionaryAddFn(fn(&mut Dictionary, BaseTypes, BaseTypes)),
         DictionaryRemoveFn(fn(&mut Dictionary, BaseTypes)),
 
@@ -34,6 +37,7 @@ pub mod functions {
         DictionaryValuesFn(fn(&Dictionary) -> Vec<BaseTypes>),
         DictionaryPrint(fn(&Dictionary)),
 
+        // std functions
         DoubleFloatArrayFn(fn(f64, f64) -> Vec<f64>),
         DoubleStringNoOutFn(fn(String, String)),
         FloatFn(fn(f64)),
@@ -47,7 +51,6 @@ pub mod functions {
     }
 
     use std::any::Any;
-
     impl PartialEq for FunctionTypes {
         fn eq(&self, other: &Self) -> bool {
             match (self, other) {

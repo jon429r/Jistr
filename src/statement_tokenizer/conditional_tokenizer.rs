@@ -1,5 +1,6 @@
 pub mod conditional_tokenizers {
 
+    use crate::statement_tokenizer::loop_tokenizer::loop_tokenizers::extract_block;
     use crate::statement_tokenizer::tokenizer::tokenizers::ParseInfo;
     use crate::token_type::token_types::TokenTypes;
 
@@ -106,21 +107,37 @@ pub mod conditional_tokenizers {
             }
 
             if let Some(new_index) = parse_keyword(expression, j, "try") {
+                let body: Vec<String>;
+                let index_of_curly_brace = expression[j..].find('{').unwrap();
+                let mut new_index = new_index + index_of_curly_brace;
+
+                (body, new_index) = extract_block(&chars, new_index + 1);
+
                 return ParseInfo::new(
-                    TokenTypes::Try,
+                    TokenTypes::Try { block: body },
                     new_index.try_into().unwrap(),
                     "try".to_string(),
                 );
             } else if let Some(new_index) = parse_keyword(expression, j, "catch") {
+                let body: Vec<String>;
+                let mut new_index = new_index;
+
+                (body, new_index) = extract_block(&chars, new_index + 2);
+
                 return ParseInfo::new(
-                    TokenTypes::Catch,
-                    new_index.try_into().unwrap(),
+                    TokenTypes::Catch { block: body },
+                    (new_index - index).try_into().unwrap(),
                     "catch".to_string(),
                 );
             } else if let Some(new_index) = parse_keyword(expression, j, "finally") {
+                let body: Vec<String>;
+                let mut new_index: usize = new_index;
+
+                (body, new_index) = extract_block(&chars, new_index + 2);
+
                 return ParseInfo::new(
-                    TokenTypes::Finally,
-                    new_index.try_into().unwrap(),
+                    TokenTypes::Finally { block: body },
+                    (new_index - index).try_into().unwrap(),
                     "finally".to_string(),
                 );
             }

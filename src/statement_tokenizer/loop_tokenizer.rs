@@ -78,7 +78,12 @@ pub mod loop_tokenizers {
         (for_variable, (start, end), index)
     }
 
-    fn extract_block(chars: &[char], mut index: usize) -> (Vec<String>, usize) {
+    pub fn extract_block(chars: &[char], mut index: usize) -> (Vec<String>, usize) {
+        print!("start: ");
+        for char in chars.iter().skip(index) {
+            print!("{}", char);
+        }
+        println!();
         let mut block: Vec<String> = Vec::new();
         let mut line: String = String::new();
 
@@ -90,13 +95,12 @@ pub mod loop_tokenizers {
             match c {
                 '{' => {
                     curly_brace_count += 1;
-                    line.push(c);
                 }
                 '}' => {
                     curly_brace_count -= 1;
                     if curly_brace_count == 0 {
                         index += 1; // Move past the closing brace
-                        break;
+                        return (block, index);
                     } else {
                         line.push(c);
                     }
@@ -110,6 +114,10 @@ pub mod loop_tokenizers {
                     }
 
                     if chars[index] == '}' {
+                        curly_brace_count -= 1;
+                        if curly_brace_count == 0 {
+                            return (block, index + 1);
+                        }
                         line.push('}');
                         index += 1;
                     }

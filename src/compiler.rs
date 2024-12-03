@@ -7,6 +7,7 @@
 pub mod compilers {
     use crate::compilers::collection::*;
     use crate::compilers::conditional::conditional_compilers::compile_if_elif_else_statement;
+    use crate::compilers::conditional::conditional_compilers::compile_try_catch_finally;
     use crate::compilers::function::*;
     use crate::compilers::loops::loop_compilers::{compile_for_loop, compile_while_loop};
     use crate::compilers::variable::operation;
@@ -105,6 +106,18 @@ pub mod compilers {
         // Main loop through the expression
         while index < expression.len() {
             let node = &expression[index]; // Access node by index
+            let next_node = |expression: &Vec<ASTNode>, index: usize| -> ASTNode {
+                if index < expression.len() {
+                    return expression[index].clone();
+                }
+                return ASTNode::None;
+            };
+            let next_next_node = |expression: &Vec<ASTNode>, index: usize| -> ASTNode {
+                if index + 1 < expression.len() {
+                    return expression[index + 1].clone();
+                }
+                return ASTNode::None;
+            };
 
             match node {
                 ASTNode::Dot(_d) => {
@@ -182,7 +195,35 @@ pub mod compilers {
                         }
                     }
                 }
-                ASTNode::Try => {}
+
+                ASTNode::Try(_t) => {
+                    // Compile the Try block
+                    let result = compile_try_catch_finally(expression, 0)?;
+
+                    //check next for catch
+                    match next_node(expression, index + 1) {
+                        ASTNode::Catch(_c) => {
+                            // Compile the Catch block
+                            let result = compile_try_catch_finally(expression, 1)?;
+                            match next_next_node(expression, index + 2) {
+                                ASTNode::Finally(_f) => {
+                                    // Compile the Finally block
+                                    let result = compile_try_catch_finally(expression, 2)?;
+                                    index += 2;
+                                    return Ok(result);
+                                }
+                                _ => {
+                                    return Ok(result);
+                                }
+                            }
+                        }
+                        _ => {
+                            index += 1;
+                            return Ok(result);
+                        }
+                    }
+                }
+
                 ASTNode::Collection(_c) => {
                     let value = parse_collection_declaration(expression);
                     match value {
@@ -209,6 +250,7 @@ pub mod compilers {
                 }
                 ASTNode::Function(_f) => {
                     let end = parse_function_declaration(expression);
+
                     match end {
                         Ok(true) => {
                             return Ok(true);

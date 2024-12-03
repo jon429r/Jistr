@@ -2,6 +2,7 @@ pub mod conditional_compilers {
     use std::error::Error;
 
     use crate::base_variable::base_types::BaseTypes;
+    use crate::compiler::compilers::route_to_parser;
     use crate::compilers::function::parse_function_call;
     use crate::compilers::variable::compile_dot_statement;
     use crate::compilers::variable::parse_operator;
@@ -207,5 +208,95 @@ pub mod conditional_compilers {
             }
             _ => Err("Error: Invalid statement".into()),
         }
+    }
+
+    pub fn string_to_ast(block: String) -> Vec<ASTNode> {
+        let mut nodes: Vec<ASTNode> = Vec::new();
+        let tokenized = tokenize(block);
+        for token in tokenized {
+            nodes.push(match_token_to_node(token));
+        }
+        return nodes;
+    }
+
+    pub fn compile_try_catch_finally(
+        nodes: &mut Vec<ASTNode>,
+        index: usize,
+    ) -> Result<bool, Box<dyn Error>> {
+        let mut try_handled = false;
+        let mut catch_handled = false;
+        let mut finally_handled = false;
+
+        for node in nodes {
+            match node {
+                ASTNode::Try(n) => {
+                    // Process the `try` statement
+                    for line in n.block.clone() {
+                        let mut child_nodes = string_to_ast(line.clone());
+                        let result = route_to_parser(&mut child_nodes, Some(0));
+
+                        match result {
+                            Ok(_) => {
+                                try_handled = true;
+                            }
+                            Err(e) => {
+                                // Log the error and allow execution to proceed to `catch`
+                                eprintln!("Error in Try block: {}", e);
+                                try_handled = false; // Indicate failure
+                            }
+                        }
+                    }
+                }
+                ASTNode::Catch(n) => {
+                    if try_handled {
+                        // Catch is redundant if Try succeeded
+                        continue;
+                    } else {
+                        for line in n.block.clone() {
+                            let mut child_nodes = string_to_ast(line.clone());
+                            let result = route_to_parser(&mut child_nodes, Some(0));
+                            match result {
+                                Ok(_) => {
+                                    catch_handled = true;
+                                }
+                                Err(e) => {
+                                    // Log the error and allow execution to proceed to `finally`
+                                    eprintln!("Error in Catch block: {}", e);
+                                    catch_handled = false; // Indicate failure
+                                }
+                            }
+                        }
+                    }
+                    catch_handled = true;
+                }
+                ASTNode::Finally(n) => {
+                    finally_handled = true;
+                    for line in n.block.clone() {
+                        let mut child_nodes = string_to_ast(line.clone());
+                        let result = route_to_parser(&mut child_nodes, Some(0));
+                        match result {
+                            Ok(_) => {
+                                catch_handled = true;
+                            }
+                            Err(e) => {
+                                // Log the error and allow execution to proceed to `finally`
+                                eprintln!("Error in Catch block: {}", e);
+                                catch_handled = false; // Indicate failure
+                            }
+                        }
+                    }
+                }
+                _ => {
+                    return Err("Error: Invalid node type".into());
+                }
+            }
+        }
+
+        // Ensure at least a `try` block was handled
+        if !try_handled && !catch_handled && !finally_handled {
+            return Err("Error: No valid try, catch, or finally blocks found".into());
+        }
+
+        Ok(true) // Compilation succeeded
     }
 }

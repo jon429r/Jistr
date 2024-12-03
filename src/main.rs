@@ -49,7 +49,7 @@ use node::nodes::match_token_to_node;
 use statement_tokenizer::tokenizer::tokenizers::tokenize;
 
 use crate::collection::{ARRAY_STACK, DICTIONARY_STACK};
-use crate::function::FUNCTION_STACK;
+use crate::function::USER_FUNCTION_STACK;
 //use lazy_static::lazy_static;
 //use std::sync::Mutex;
 
@@ -90,7 +90,7 @@ fn print_dictionary_stack() {
 ///This function prints the function stack for dev purposes
 ///
 fn print_function_stack() {
-    let function_stack = FUNCTION_STACK.lock().unwrap(); // Lock the mutex
+    let function_stack = USER_FUNCTION_STACK.lock().unwrap(); // Lock the mutex
     for function in function_stack.iter() {
         println!("{}", function); // Now we can iterate over the Vec
     }
@@ -336,6 +336,19 @@ fn parse_file(file_path: &str) -> Result<(), Box<dyn Error>> {
             }
 
             match parsed_info {
+                ASTNode::Function(f) => {
+                    tokenized_expression.push(parsed_info.clone());
+                    result = route_to_parser(&mut tokenized_expression, None)?;
+                    // check result if Error throw error with line number and exit
+                    if !result {
+                        println!("Error in parsing line: {}", line);
+                        println!("Line: {}", line);
+                        std::process::exit(1);
+                    }
+
+                    // Clear tokenized_expression after processing
+                    tokenized_expression.clear();
+                }
                 ASTNode::SemiColon => {
                     // Check if the expression is valid before processing
                     if tokenized_expression.len() == 1 {
@@ -373,6 +386,10 @@ fn parse_file(file_path: &str) -> Result<(), Box<dyn Error>> {
                                     result = route_to_parser(&mut tokenized_expression, None)?;
                                 }
                             }
+                        }
+                        ASTNode::Function(f) => {
+                            print!("route to parser");
+                            result = route_to_parser(&mut tokenized_expression, None)?;
                         }
                         _ => {
                             result = route_to_parser(&mut tokenized_expression, None)?;

@@ -188,19 +188,33 @@ pub mod token_types {
         /*
          * Try statement
          */
-        Try,
+        Try {
+            block: Vec<String>,
+        },
         /*
          * Catch statement
          */
-        Catch,
+        Catch {
+            block: Vec<String>,
+        },
         /*
          * Finally statement
          */
-        Finally,
+        Finally {
+            block: Vec<String>,
+        },
+
         /*
          * !
          * */
         Not,
+
+        /*
+         * Used for a return statement
+         */
+        ReturnStatement {
+            value: String,
+        },
     }
 
     impl PartialEq for TokenTypes {
@@ -238,6 +252,10 @@ pub mod token_types {
                 (TokenTypes::RightCurly, TokenTypes::RightCurly) => true,
                 (TokenTypes::LeftCurly, TokenTypes::LeftCurly) => true,
                 (TokenTypes::ReturnTypeAssignment, TokenTypes::ReturnTypeAssignment) => true,
+                (
+                    TokenTypes::ReturnStatement { value },
+                    TokenTypes::ReturnStatement { value: val },
+                ) => value == val,
                 (TokenTypes::Variable, TokenTypes::Variable) => true,
 
                 (
@@ -295,9 +313,24 @@ pub mod token_types {
                 ) => statement_a == statement_b,
                 (TokenTypes::Break, TokenTypes::Break) => true,
                 (TokenTypes::Continue, TokenTypes::Continue) => true,
-                (TokenTypes::Try, TokenTypes::Try) => true,
-                (TokenTypes::Catch, TokenTypes::Catch) => true,
-                (TokenTypes::Finally, TokenTypes::Finally) => true,
+                (
+                    TokenTypes::Try {
+                        block: ref statement_a,
+                        ..
+                    },
+                    TokenTypes::Try {
+                        block: ref statement_b,
+                        ..
+                    },
+                ) => statement_a == statement_b,
+                (
+                    TokenTypes::Catch { block: ref block_a },
+                    TokenTypes::Catch { block: ref block_b },
+                ) => block_a == block_b,
+                (
+                    TokenTypes::Finally { block: ref block_a },
+                    TokenTypes::Finally { block: ref block_b },
+                ) => block_a == block_b,
                 (TokenTypes::Not, TokenTypes::Not) => true,
                 (
                     TokenTypes::While {
@@ -366,9 +399,9 @@ pub mod token_types {
                 }
                 TokenTypes::Break => "Break".to_string(),
                 TokenTypes::Continue => "Continue".to_string(),
-                TokenTypes::Try => "Try".to_string(),
-                TokenTypes::Catch => "Catch".to_string(),
-                TokenTypes::Finally => "Finally".to_string(),
+                TokenTypes::Try { block } => "Try".to_string(),
+                TokenTypes::Catch { block } => "Catch".to_string(),
+                TokenTypes::Finally { block } => "Finally".to_string(),
                 TokenTypes::FatArrow => "FatArrow".to_string(),
                 TokenTypes::FunctionCallArguments => "FunctionCallArguments".to_string(),
                 TokenTypes::Float => "Float".to_string(),
@@ -405,6 +438,7 @@ pub mod token_types {
                 TokenTypes::Comment => "Comment".to_string(),
                 TokenTypes::RightBracket => "RightBracket".to_string(),
                 TokenTypes::LeftBracket => "LeftBracket".to_string(),
+                TokenTypes::ReturnStatement { value } => format!("ReturnStatement: {}", value),
                 TokenTypes::None => "None".to_string(),
             }
         }
