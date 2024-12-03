@@ -167,7 +167,6 @@ func add(a: int, b: int) -> int {
     return a + b;
 ```
 ### Error Handling
-#### !Important Not yet implemented 
 
 Jist uses try-catch blocks for error handling, inspired by Rust’s result and error types.
 
@@ -175,7 +174,7 @@ Jist uses try-catch blocks for error handling, inspired by Rust’s result and e
 //Copy code
 try {
     // code that may fail
-} catch error {
+} catch {
     // handle error
 ```
 

@@ -1,7 +1,7 @@
 try {
-    print("Hello, Jist!");
+    println("Hello, Jist!");
   } catch {
-    print("Goodbye, Jist");
+    println("Goodbye, Jist");
 } finally {
-    print("Finally, Jist");
+    println("Finally, Jist");
 }

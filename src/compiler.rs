@@ -196,6 +196,62 @@ pub mod compilers {
                     }
                 }
 
+                ASTNode::Catch(_t) => {
+                    // Compile the Try block
+                    let result = compile_try_catch_finally(expression, 0)?;
+
+                    //check next for catch
+                    match next_node(expression, index + 1) {
+                        ASTNode::Catch(_c) => {
+                            // Compile the Catch block
+                            let result = compile_try_catch_finally(expression, 1)?;
+                            match next_next_node(expression, index + 2) {
+                                ASTNode::Finally(_f) => {
+                                    // Compile the Finally block
+                                    let result = compile_try_catch_finally(expression, 2)?;
+                                    index += 2;
+                                    return Ok(result);
+                                }
+                                _ => {
+                                    return Ok(result);
+                                }
+                            }
+                        }
+                        _ => {
+                            index += 1;
+                            return Ok(result);
+                        }
+                    }
+                }
+
+                ASTNode::Finally(_t) => {
+                    // Compile the Try block
+                    let result = compile_try_catch_finally(expression, 0)?;
+
+                    //check next for catch
+                    match next_node(expression, index + 1) {
+                        ASTNode::Catch(_c) => {
+                            // Compile the Catch block
+                            let result = compile_try_catch_finally(expression, 1)?;
+                            match next_next_node(expression, index + 2) {
+                                ASTNode::Finally(_f) => {
+                                    // Compile the Finally block
+                                    let result = compile_try_catch_finally(expression, 2)?;
+                                    index += 2;
+                                    return Ok(result);
+                                }
+                                _ => {
+                                    return Ok(result);
+                                }
+                            }
+                        }
+                        _ => {
+                            index += 1;
+                            return Ok(result);
+                        }
+                    }
+                }
+
                 ASTNode::Try(_t) => {
                     // Compile the Try block
                     let result = compile_try_catch_finally(expression, 0)?;

@@ -43,7 +43,7 @@ use std::{env, usize};
 use crate::node::nodes::ASTNode;
 use base_variable::variables::VARIABLE_STACK;
 use compiler::compilers::route_to_parser;
-use globals::MAKE_LOOP;
+use globals::{MAKE_LOOP, TRY_FAIL};
 //use jist::node::nodes::ASTNode;
 use node::nodes::match_token_to_node;
 use statement_tokenizer::tokenizer::tokenizers::tokenize;
@@ -336,6 +336,56 @@ fn parse_file(file_path: &str) -> Result<(), Box<dyn Error>> {
             }
 
             match parsed_info {
+                ASTNode::Try(t) => {
+                    tokenized_expression.push(parsed_info.clone());
+                    result = route_to_parser(&mut tokenized_expression, None)?;
+                    // check result if Error throw error with line number and exit
+                    if !result {
+                        println!("Error in parsing line: {}", line);
+                        println!("Line: {}", line);
+                        std::process::exit(1);
+                    }
+                    // Clear tokenized_expression after processing
+                    tokenized_expression.clear();
+                }
+                ASTNode::Catch(c) => {
+                    if unsafe { TRY_FAIL } {
+                        tokenized_expression.push(parsed_info.clone());
+                        result = route_to_parser(&mut tokenized_expression, None)?;
+                        // check result if Error throw error with line number and exit
+                        if !result {
+                            println!("Error in parsing line: {}", line);
+                            println!("Line: {}", line);
+                            std::process::exit(1);
+                        }
+                        // Clear tokenized_expression after processing
+                        tokenized_expression.clear();
+
+                        // check result if Error throw error with line number and exit
+                        if !result {
+                            println!("Error in parsing line: {}", line);
+                            println!("Line: {}", line);
+                            std::process::exit(1);
+                        }
+                        // Clear tokenized_expression after processing
+                        tokenized_expression.clear();
+                    } else {
+                        unsafe { TRY_FAIL = false };
+                    }
+                }
+                ASTNode::Finally(f) => {
+                    tokenized_expression.push(parsed_info.clone());
+                    result = route_to_parser(&mut tokenized_expression, None)?;
+                    // check result if Error throw error with line number and exit
+                    if !result {
+                        println!("Error in parsing line: {}", line);
+                        println!("Line: {}", line);
+                        std::process::exit(1);
+                    }
+                    // Clear tokenized_expression after processing
+                    tokenized_expression.clear();
+                }
+
                 ASTNode::Function(f) => {
                     tokenized_expression.push(parsed_info.clone());
                     result = route_to_parser(&mut tokenized_expression, None)?;

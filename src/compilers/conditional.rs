@@ -7,6 +7,7 @@ pub mod conditional_compilers {
     use crate::compilers::variable::compile_dot_statement;
     use crate::compilers::variable::parse_operator;
     use crate::compilers::variable::parse_variable_call;
+    use crate::globals::TRY_FAIL;
     use crate::node::nodes::from_base_type;
     use crate::node::nodes::match_token_to_node;
     use crate::node::nodes::to_base_type;
@@ -243,6 +244,9 @@ pub mod conditional_compilers {
                                 // Log the error and allow execution to proceed to `catch`
                                 eprintln!("Error in Try block: {}", e);
                                 try_handled = false; // Indicate failure
+                                unsafe {
+                                    TRY_FAIL = true;
+                                }
                             }
                         }
                     }
