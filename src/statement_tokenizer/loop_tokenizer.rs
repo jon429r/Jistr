@@ -79,11 +79,6 @@ pub mod loop_tokenizers {
     }
 
     pub fn extract_block(chars: &[char], mut index: usize) -> (Vec<String>, usize) {
-        print!("start: ");
-        for char in chars.iter().skip(index) {
-            print!("{}", char);
-        }
-        println!();
         let mut block: Vec<String> = Vec::new();
         let mut line: String = String::new();
 

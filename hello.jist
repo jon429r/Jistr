@@ -1,7 +1,7 @@
-let b: int = 2+2;
-println(b);
-
-func sumtwo (a: int, b: int) -> int {
-    let i: int = 1+1;
-    print(i);
-  }
+try {
+    print("Hello, Jist!");
+  } catch {
+    print("Goodbye, Jist");
+} finally {
+    print("Finally, Jist");
+}
