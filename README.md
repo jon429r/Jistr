@@ -19,9 +19,14 @@ Welcome to **Jist**, a lightweight and efficient programming language built in *
 
 ---
 
+## WIKI
+
+Check out the wiki: https://github.com/jon429r/JistR/wiki
+
 ## Introduction
 
 Jist is built using **Rust**, taking advantage of its safety and performance. With a focus on minimalism, Jist is suited for both small scripting tasks and larger, more complex applications. Rust's ownership system ensures memory safety, and Jist inherits these properties, making it a secure and performant language.
+
 
 ### Key Features:
 - Simple and expressive syntax
