@@ -60,13 +60,13 @@ $ cargo install --path .
 
 ### Hello World
 ```jist
-print("Hello, World!")
+print("Hello, World!");
 ```
 ### Variables
 ```jist
 //Copy code
-let name: string = "Jist"
-let version: float = 1.0
+let name: string = "Jist";
+let version: float = 1.0;
 ```
 ### Comments
 ```jist
@@ -102,11 +102,11 @@ Will result in b having a value of 3 instead of throwing an error
 
 ```jist
 //Copy code
-let age: int = 25        // Integer
-let pi: float = 3.14       // Float
-let greeting: string = "Hi" // String
-let firstInital: char = 'J' // Char, notice singe quotes for chars and double quotes for strings 
-let isValid: boolean = true  // Boolean
+let age: int = 25;        // Integer
+let pi: float = 3.14;       // Float
+let greeting: string = "Hi"; // String
+let firstInital: char = 'J'; // Char, notice singe quotes for chars and double quotes for strings 
+let isValid: boolean = true;  // Boolean
 ```
 
 Arrays and Dictionaries also come with built in functions to make working with them easier
@@ -157,7 +157,7 @@ Loops
 ```jist
 //Copy code
 for (i, 0..10) {
-    print(i)
+    print(i);
 }
 
 while (condition) {
