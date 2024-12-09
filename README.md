@@ -170,6 +170,7 @@ while (condition) {
 //Copy code
 func add(a: int, b: int) -> int {
     return a + b;
+}
 ```
 ### Error Handling
 
@@ -181,6 +182,7 @@ try {
     // code that may fail
 } catch {
     // handle error
+}
 ```
 
 ### Standard Library
